@@ -31,9 +31,18 @@ function ForgotPassword() {
           setEmail("");
         },
         onError: (err: any) => {
+          const status = err?.response?.status;
           const msg =
-            err?.response?.data?.message || "Something went wrong. Please try again.";
-          toast.error(msg);
+            err?.response?.data?.message ||
+            err?.response?.data?.error ||
+            err?.message ||
+            "Something went wrong. Please try again.";
+          console.error(
+            "[ForgotPassword] failed:",
+            status,
+            err?.response?.data || err
+          );
+          toast.error(status ? `Error ${status}: ${msg}` : msg);
         },
       }
     );
