@@ -30,7 +30,9 @@ export const useRegisterUser = () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       toast.success("User registered successfully");
     },
-    onError: () => toast.error("Failed to register user"),
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to register user");
+    },
   });
 };
 
