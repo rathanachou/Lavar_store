@@ -46,11 +46,11 @@ const ProductCard = memo(function ProductCard({ item, disabled = false, onAdd, d
       }}
     >
       {/* Image */}
-      <div style={{ position: "relative", aspectRatio: "4/3", overflow: "hidden", background: dark ? "#1e2435" : "#f0f4ff" }}>
+      <div style={{ position: "relative", aspectRatio: "4/3", overflow: "hidden", background: dark ? "#1e2435" : "#f0f4ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <img
           src={item.productImages?.[0]?.imageUrl ?? "/no-image.png"}
           alt={item.name}
-          style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" }}
+          style={{ width: "100%", height: "100%", objectFit: "contain", transition: "transform 0.4s ease" }}
           className="group-hover:scale-105"
         />
 

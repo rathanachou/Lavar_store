@@ -193,14 +193,16 @@ const NearExpiry = () => {
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <img
-                          className="w-10 h-10 rounded-md object-cover"
-                          src={
-                            batch.product.productImages?.[0]?.imageUrl ??
-                            "/productImages.png"
-                          }
-                          alt={batch.product.name}
-                        />
+                        <div className="w-10 h-10 rounded-md bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
+                          <img
+                            className="w-full h-full object-contain"
+                            src={
+                              batch.product.productImages?.[0]?.imageUrl ??
+                              "/productImages.png"
+                            }
+                            alt={batch.product.name}
+                          />
+                        </div>
                         <div>
                           <div className="font-medium">{batch.product.name}</div>
                         </div>

@@ -97,7 +97,7 @@ const FilePreviewItem = ({
             <img
               src={imageUrl}
               alt={file.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           )}
         </div>
@@ -532,7 +532,7 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
                             <img
                               src={image.imageUrl}
                               alt={image.fileName}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain"
                             />
                           </div>
                           <div className="flex-1 pr-1">

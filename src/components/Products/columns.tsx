@@ -41,11 +41,13 @@ export const columns = ({
   {
     header: "Image",
     cell: ({ row }) => (
-      <img
-        className="w-[60px] h-[60px] rounded-md object-cover"
-        src={row.original.productImages?.[0]?.imageUrl ?? "/productImages.png"}
-        alt={row.original.name}
-      />
+      <div className="w-[60px] h-[60px] rounded-md bg-gray-100 overflow-hidden flex items-center justify-center">
+        <img
+          className="w-full h-full object-contain"
+          src={row.original.productImages?.[0]?.imageUrl ?? "/productImages.png"}
+          alt={row.original.name}
+        />
+      </div>
     ),
   },
   {
