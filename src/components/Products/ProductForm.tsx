@@ -444,19 +444,6 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
                 />
               </div>
 
-              {/* ── Barcode ───────────────────────────────── */}
-              <div className="grid grid-cols-2 gap-4">
-                <Field>
-                  <FieldLabel>Barcode</FieldLabel>
-                  <Input
-                    value={extraBarcode}
-                    placeholder="Scan or enter barcode"
-                    onChange={(e) => setExtraBarcode(e.target.value)}
-                    autoComplete="off"
-                  />
-                </Field>
-              </div>
-
               {/* ── Expire Date ───────────────────────────── */}
               <form.Field
                 name="expireDate"
