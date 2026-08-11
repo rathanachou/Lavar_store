@@ -61,6 +61,8 @@ export default function PosPage() {
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
   const [receiptItems,   setReceiptItems]   = useState<ICart[]>([]);
   const [receiptTotal,   setReceiptTotal]   = useState(0);
+  const [receiptSubtotal, setReceiptSubtotal] = useState(0);
+  const [receiptDiscount, setReceiptDiscount] = useState(0);
   const [receiptOrderId, setReceiptOrderId] = useState<number | null>(null);
 
   // ── Cart ───────────────────────────────────────────────────
@@ -76,7 +78,7 @@ export default function PosPage() {
 
   // ── Memoized product data ──────────────────────────────────
   // Derive products list filtered to in-stock items only, then build
-  // a lookup map keyed by (id, name, barcode, sku) for O(1) scanning.
+  // a lookup map keyed by (id, name, barcode) for O(1) scanning.
   const { products, productsById, outOfStockProducts, categories } = useMemo(() => {
     const all      = (productData?.data       as IProduct[]) ?? [];
     const stocked  = all.filter((p) => p.qty > 0);
@@ -89,7 +91,6 @@ export default function PosPage() {
       byId.set(String(p.id),             p);
       byId.set(p.name.toLowerCase(),     p);
       if ((p as any).barcode) byId.set(String((p as any).barcode).toLowerCase(), p);
-      if ((p as any).sku)     byId.set(String((p as any).sku).toLowerCase(),     p);
     }
 
     return { products: stocked, productsById: byId, outOfStockProducts: outStock, categories: cats };
@@ -155,8 +156,12 @@ export default function PosPage() {
     confirmOrderMutate({ orderId, paymentMethod }, {
       onSuccess: () => {
         console.log("✅ confirmOrder success — orderId:", orderId);
+        const subTotal = items.reduce((sum, it) => sum + it.originalPrice * it.qty, 0);
+        const discAmt  = items.reduce((sum, it) => sum + (it.originalPrice - it.price) * it.qty, 0);
         setReceiptItems(items);
         setReceiptTotal(total);
+        setReceiptSubtotal(subTotal);
+        setReceiptDiscount(discAmt);
         setReceiptOrderId(orderId);
         setCurrentOrderId(null);
         setIsSuccess(true);
@@ -350,6 +355,8 @@ export default function PosPage() {
         <PrintReceipt
           cartItems={receiptItems}
           total={receiptTotal}
+          subtotal={receiptSubtotal}
+          discountAmount={receiptDiscount}
           orderId={receiptOrderId}
           formatPrice={formatPrice}
           onClose={() => setShowReceipt(false)}

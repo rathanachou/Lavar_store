@@ -81,6 +81,22 @@ export const fetchLowStockProducts = async (threshold?: number) => {
   return res;
 };
 
+// ─── Near-Expiry & Discounts ─────────────────────────────
+export const fetchNearExpiryProducts = async (days: number = 7) => {
+  const res = await api.get(`/api/v1/products/near-expiry`, {
+    params: { days },
+  });
+  return res;
+};
+
+export const setProductDiscount = async (
+  id: number,
+  request: { discount_percent: number }
+) => {
+  const res = await api.patch(`/api/v1/products/${id}/discount`, request);
+  return res;
+};
+
 // ─── Barcodes ─────────────────────────────────────────────
 
 const downloadBlob = (blob: Blob, filename: string) => {

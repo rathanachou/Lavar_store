@@ -48,6 +48,8 @@ const productSchema = z.object({
       message: "Category is required",
     }),
   qty: z.number().int().min(0, "Quantity must be 0 or more"),
+  // Always present in defaultValues — null means "no expiry date tracked"
+  expireDate: z.string().nullable(),
 });
 
 export type ProductSchema = z.infer<typeof productSchema>;
@@ -132,7 +134,6 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [deleteImageIds, setDeleteImageIds] = useState<number[]>([]);
   const [extraBarcode, setExtraBarcode] = useState(product?.barcode ?? "");
-  const [extraSku, setExtraSku] = useState(product?.sku ?? "");
 
   const { data } = useCategoriesList();
   const { mutateAsync: createProductMutate } = useCreateProduct();
@@ -146,6 +147,7 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
       price: product?.price ? Number(product.price) : 0,
       categoryId: product?.categoryId || undefined,
       qty: product?.qty ?? 0,
+      expireDate: product?.expireDate ?? null,
     },
     validators: {
       onSubmit: productSchema,
@@ -153,14 +155,18 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
     onSubmit: async ({ value }) => {
       if (value.categoryId === undefined) return;
 
-      const payload = { ...value, categoryId: value.categoryId, barcode: extraBarcode || undefined, sku: extraSku || undefined };
+      const payload = {
+        ...value,
+        categoryId: value.categoryId,
+        barcode: extraBarcode || undefined,
+        expireDate: value.expireDate || null,
+      };
       setIsLoading(true);
 
       const resetFormState = () => {
         setUploadedFiles([]);
         setDeleteImageIds([]);
         setExtraBarcode("");
-        setExtraSku("");
         form.reset();
         setOpen(false);
       };
@@ -235,12 +241,11 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
       form.setFieldValue("price", Number(product.price));
       form.setFieldValue("categoryId", product.categoryId);
       form.setFieldValue("qty", product.qty);
+      form.setFieldValue("expireDate", product.expireDate ?? null);
       setExtraBarcode(product.barcode ?? "");
-      setExtraSku(product.sku ?? "");
     } else {
       form.reset();
       setExtraBarcode("");
-      setExtraSku("");
     }
   }, [product, form]);
 
@@ -439,7 +444,7 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
                 />
               </div>
 
-              {/* ── Barcode & SKU ──────────────────────────── */}
+              {/* ── Barcode ───────────────────────────────── */}
               <div className="grid grid-cols-2 gap-4">
                 <Field>
                   <FieldLabel>Barcode</FieldLabel>
@@ -450,16 +455,40 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
                     autoComplete="off"
                   />
                 </Field>
-                <Field>
-                  <FieldLabel>SKU</FieldLabel>
-                  <Input
-                    value={extraSku}
-                    placeholder="Stock keeping unit"
-                    onChange={(e) => setExtraSku(e.target.value)}
-                    autoComplete="off"
-                  />
-                </Field>
               </div>
+
+              {/* ── Expire Date ───────────────────────────── */}
+              <form.Field
+                name="expireDate"
+                children={(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        Expire Date
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="date"
+                        value={field.state.value ?? ""}
+                        onBlur={field.handleBlur}
+                        onChange={(e) =>
+                          field.handleChange(
+                            e.target.value ? e.target.value : null
+                          )
+                        }
+                        aria-invalid={isInvalid}
+                        autoComplete="off"
+                      />
+                      {isInvalid && (
+                        <FieldError errors={field.state.meta.errors} />
+                      )}
+                    </Field>
+                  );
+                }}
+              />
 
               {/* ── Image Upload ──────────────────────────── */}
               <div>

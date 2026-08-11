@@ -73,6 +73,29 @@ const ProductCard = memo(function ProductCard({ item, disabled = false, onAdd, d
             {item.qty}
           </div>
         )}
+
+        {Number(item.discountPercent) > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              background: "#f97316",
+              color: "#fff",
+              fontSize: 10,
+              fontWeight: 700,
+              padding: "2px 8px",
+              borderRadius: 20,
+              boxShadow: "0 2px 8px rgba(249,115,22,0.4)",
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+            }}
+            title="Near-expiry discount"
+          >
+            -{Number(item.discountPercent)}%
+          </div>
+        )}
       </div>
 
       {/* Info */}

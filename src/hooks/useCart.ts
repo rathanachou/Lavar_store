@@ -27,14 +27,21 @@ export const useCart = () => {
       }
 
       // ─── Map IProduct → ICart ──────────────────────────
+      // Apply near-expiry discount_percent to the unit price so the cart,
+      // checkout total and receipt match what the backend charges.
+      const basePrice = Number(product.price);
+      const percent   = Number(product.discountPercent) || 0;
+      const effectivePrice = percent > 0 ? basePrice * (1 - percent / 100) : basePrice;
+
       const cartItem: ICart = {
-        id:       product.id,
-        name:     product.name,
-        category: product.category?.name ?? "Uncategorized",
-        price:    Number(product.price),
-        imageUrl: product.productImages?.[0]?.imageUrl ?? "/no-image.png",
-        stock:    product.qty,
-        qty:      1,
+        id:            product.id,
+        name:          product.name,
+        category:      product.category?.name ?? "Uncategorized",
+        price:         effectivePrice,
+        originalPrice: basePrice,   // price before discount — for receipt savings
+        imageUrl:      product.productImages?.[0]?.imageUrl ?? "/no-image.png",
+        stock:         product.qty,
+        qty:           1,
       };
 
       toast.success(`${product.name} added!`);

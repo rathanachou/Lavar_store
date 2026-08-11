@@ -6,7 +6,10 @@ export interface IProduct {
   categoryId: number | undefined;
   isActive: boolean;
   barcode?: string;
-  sku?: string;
+  /** Expiration date as "YYYY-MM-DD" (DATEONLY) or null when not tracked */
+  expireDate?: string | null;
+  /** Active near-expiry discount percent (0 = no discount) */
+  discountPercent?: number;
   category: {
     id: number;
     name: string;
@@ -19,6 +22,19 @@ export interface IProductImage {
   productId: number;
   imageUrl: string;
   fileName: string;
+}
+
+/** A single stock batch (ProductBatch row) as returned by /near-expiry.
+ *  Product fields are nested under `product`. */
+export interface IProductBatch {
+  id: number;
+  productId: number;
+  batchNumber?: string | null;
+  qty: number;
+  expireDate: string | null;
+  receivedDate?: string;
+  costPrice?: number | null;
+  product: IProduct;
 }
 
 export interface IPagination {

@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import './App.css';
 import DashboardLaysOut from './layouts/DashboardLaysOut';
 import Product          from './page/Products';
+import NearExpiry       from './page/NearExpiry';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster }      from 'sonner';
 import Reports          from './page/Reports';
@@ -61,6 +62,9 @@ function AppRoutes() {
         } />
         <Route path="/admin/products" element={
           <AdminRoute><Product /></AdminRoute>
+        } />
+        <Route path="/admin/products/near-expiry" element={
+          <AdminRoute><NearExpiry /></AdminRoute>
         } />
         <Route path="/admin/categories" element={
           <AdminRoute><Category /></AdminRoute>

@@ -13,6 +13,7 @@ import {
 import { Button } from "../../components/ui/button";
 import {
   MoreHorizontal,
+  Percent,
   SquarePen,
   Trash2,
 } from "lucide-react";
@@ -70,10 +71,23 @@ export const columns = ({
     ),
   },
   {
-    header: "Barcode",
+    header: "Discount",
+    cell: ({ row }) => {
+      const percent = Number(row.original.discountPercent) || 0;
+      if (percent <= 0) return <span className="text-xs text-muted-foreground">—</span>;
+      return (
+        <Badge className="bg-orange-500">
+          <Percent className="h-3 w-3" />
+          {percent}% off
+        </Badge>
+      );
+    },
+  },
+  {
+    header: "Expire Date",
     cell: ({ row }) => (
-      <span className="text-xs font-mono text-muted-foreground">
-        {row.original.barcode || "—"}
+      <span className="text-sm text-muted-foreground">
+        {row.original.expireDate || "—"}
       </span>
     ),
   },

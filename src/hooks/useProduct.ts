@@ -10,6 +10,8 @@ import {
   stockIn,
   stockOut,
   fetchLowStockProducts,
+  fetchNearExpiryProducts,
+  setProductDiscount,
 } from "@/service/product.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -168,5 +170,42 @@ export const useLowStockProducts = (threshold?: number) => {
     queryKey: ["products-low-stock", threshold],
     queryFn: () => fetchLowStockProducts(threshold),
     retry: false,
+  });
+};
+
+export const useNearExpiryProducts = (days: number = 7) => {
+  return useQuery({
+    queryKey: ["products-near-expiry", days],
+    queryFn: () => fetchNearExpiryProducts(days),
+    retry: false,
+  });
+};
+
+export const useSetProductDiscount = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      discount_percent,
+    }: {
+      id: number;
+      discount_percent: number;
+    }) => setProductDiscount(id, { discount_percent }),
+    onSuccess: (_, variables) => {
+      toast.success(
+        variables.discount_percent > 0
+          ? `Discount set to ${variables.discount_percent}%`
+          : "Discount removed"
+      );
+      queryClient.invalidateQueries({ queryKey: ["products-near-expiry"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-out-of-stock"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to update discount"
+      );
+      console.error("Failed to update discount", error);
+    },
   });
 };

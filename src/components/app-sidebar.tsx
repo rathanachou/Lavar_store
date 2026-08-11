@@ -163,6 +163,7 @@ export function AppSidebar() {
         title: "Products", url: "/admin/products", icon: Package,
         items: [
           { title: "All Products", url: "/admin/products" },
+          { title: "Near Expiry",  url: "/admin/products/near-expiry" },
           { title: "Categories",   url: "/admin/categories" },
         ],
       },

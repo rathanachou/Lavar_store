@@ -5,6 +5,8 @@ import type { ICart } from "@/types/cart";
 interface PrintReceiptProps {
   cartItems: ICart[];
   total: number;
+  subtotal?: number;
+  discountAmount?: number;
   orderId?: number | null;
   formatPrice: (usd: number) => string;
   onClose: () => void;
@@ -13,6 +15,8 @@ interface PrintReceiptProps {
 export default function PrintReceipt({
   cartItems,
   total,
+  subtotal,
+  discountAmount,
   orderId,
   formatPrice,
   onClose,
@@ -26,6 +30,14 @@ export default function PrintReceipt({
   const timeStr = now.toLocaleTimeString("en-US", {
     hour: "2-digit", minute: "2-digit",
   });
+
+  // ── Discount / savings ──────────────────────────────────
+  // subtotal = sum of original (pre-discount) prices; discountAmount = the
+  // near-expiry savings. Fall back to `total` when not passed so the
+  // component stays safe for callers that don't provide them.
+  const discount    = discountAmount ?? 0;
+  const subTotal    = subtotal ?? total;
+  const hasDiscount = discount > 0;
 
   // ── Preload the logo image into browser cache so window.print()
   //    doesn't wait for a fresh network request. ────────────
@@ -130,12 +142,14 @@ export default function PrintReceipt({
           <div className="px-6 py-3 border-t border-dashed border-gray-300">
             <div className="flex justify-between text-sm text-gray-500">
               <span>Subtotal</span>
-              <span>{formatPrice(total)}</span>
+              <span>{formatPrice(subTotal)}</span>
             </div>
-            <div className="flex justify-between text-sm text-gray-500 mt-1">
-              <span>Discount</span>
-              <span>$0.00</span>
-            </div>
+            {hasDiscount && (
+              <div className="flex justify-between text-sm text-red-500 mt-1">
+                <span>Discount</span>
+                <span>-{formatPrice(discount)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-base font-bold mt-2 pt-2 border-t border-gray-200">
               <span>TOTAL</span>
               <span className="text-blue-600">{formatPrice(total)}</span>
@@ -144,6 +158,12 @@ export default function PrintReceipt({
               <span>Paid (ABA)</span>
               <span>{formatPrice(total)}</span>
             </div>
+            {hasDiscount && (
+              <div className="flex justify-between text-xs text-green-600 font-semibold mt-1">
+                <span>You saved</span>
+                <span>{formatPrice(discount)}</span>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
