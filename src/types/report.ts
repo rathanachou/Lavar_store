@@ -11,6 +11,8 @@ export interface IReportTransaction {
 /** Summary aggregations for a daily sales report */
 export interface IDailySalesSummary {
   totalRevenue: number;
+  netSales: number;
+  totalDiscount: number;
   totalTransactions: number;
   totalItemsSold: number;
   /** Total Riel (៛) collected that day, from orders charged in KHR. 0 when none. */
