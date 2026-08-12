@@ -6,30 +6,34 @@ import type { Theme } from "@/hooks/useTheme";
 interface ProductCardProps {
   item: IProduct;
   disabled?: boolean;
+  /** True when the product's stock batch is expired — shown as a badge + disabled */
+  expired?: boolean;
   onAdd: (item: IProduct) => void;
   dark: boolean;
   t: Theme;
   formatPrice: (usd: number) => string;
 }
 
-const ProductCard = memo(function ProductCard({ item, disabled = false, onAdd, dark, t, formatPrice }: ProductCardProps) {
+const ProductCard = memo(function ProductCard({ item, disabled = false, expired = false, onAdd, dark, t, formatPrice }: ProductCardProps) {
+  // Expired products behave like disabled ones (no click-through).
+  const isDisabled = disabled || expired;
   return (
     <div
-      onClick={() => !disabled && onAdd(item)}
+      onClick={() => !isDisabled && onAdd(item)}
       style={{
         background: t.cardBg,
         border: `1px solid ${t.cardBorder}`,
         boxShadow: t.cardShadow,
         borderRadius: 14,
         overflow: "hidden",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.6 : 1,
+        cursor: isDisabled ? "not-allowed" : "pointer",
+        opacity: isDisabled ? 0.6 : 1,
         transition: "all 0.2s ease",
-        filter: disabled ? "grayscale(0.4)" : "none",
+        filter: isDisabled ? "grayscale(0.4)" : "none",
       }}
       className="group"
       onMouseEnter={(e) => {
-        if (!disabled) {
+        if (!isDisabled) {
           const el = e.currentTarget as HTMLDivElement;
           el.style.transform = "translateY(-3px)";
           el.style.boxShadow = dark
@@ -54,10 +58,10 @@ const ProductCard = memo(function ProductCard({ item, disabled = false, onAdd, d
           className="group-hover:scale-105"
         />
 
-        {disabled ? (
+        {isDisabled ? (
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", background: "#ef4444", padding: "3px 10px", borderRadius: 20 }}>
-              Out of Stock
+              {expired ? "Expired" : "Out of Stock"}
             </span>
           </div>
         ) : (
@@ -68,9 +72,30 @@ const ProductCard = memo(function ProductCard({ item, disabled = false, onAdd, d
           </div>
         )}
 
-        {!disabled && (
+        {!isDisabled && (
           <div style={{ position: "absolute", top: 8, right: 8, background: item.qty > 5 ? t.badgeGreenBg : t.badgeOrangeBg, color: item.qty > 5 ? t.badgeGreenText : t.badgeOrangeText, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, backdropFilter: "blur(4px)" }}>
             {item.qty}
+          </div>
+        )}
+
+        {expired && !disabled && (
+          <div
+            style={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              background: "#7c2d12",
+              color: "#fecaca",
+              fontSize: 10,
+              fontWeight: 700,
+              padding: "2px 8px",
+              borderRadius: 20,
+              backdropFilter: "blur(4px)",
+              border: "1px solid rgba(239,68,68,0.4)",
+            }}
+            title={`Expired ${item.expireDate}`}
+          >
+            Expired
           </div>
         )}
 

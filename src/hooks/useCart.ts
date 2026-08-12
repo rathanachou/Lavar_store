@@ -3,6 +3,7 @@ import type { ICart, ICartSummary } from "../types/cart";
 import type { IProduct } from "../types/product";
 import { toast } from "sonner";
 import { useCreateOrder } from "@/page/Orders";
+import { isProductExpired } from "@/utils/expiry";
 
 export const useCart = () => {
   const [cartItems, setCartItems] = useState<ICart[]>([]);
@@ -11,6 +12,13 @@ export const useCart = () => {
 
   // ─── Add to Cart ──────────────────────────────────────
   const addToCart = useCallback((product: IProduct) => {
+    // Defense in depth — never allow an expired product into the cart even if
+    // some code path bypasses the disabled POS card (e.g. stale state).
+    if (isProductExpired(product)) {
+      toast.error(`❌ "${product.name}" is expired and cannot be sold`);
+      return;
+    }
+
     setCartItems((prev) => {
       const existing = prev.find((item) => item.id === product.id);
 

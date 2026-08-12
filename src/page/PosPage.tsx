@@ -27,6 +27,7 @@ import OrderSummaryDialog   from "@/components/OrderSummaryDialog";
 import PaymentSuccessDialog from "@/components/PaymentSuccessDialog";
 import PrintReceipt         from "@/components/PrintReceipt";
 import { useCancelOrder, useCreateOrder } from "./Orders";
+import { isProductExpired } from "@/utils/expiry";
 
 // ✅ removed useAbaRedirect — ABA uses modal callback, not URL redirect
 
@@ -79,21 +80,27 @@ export default function PosPage() {
   // ── Memoized product data ──────────────────────────────────
   // Derive products list filtered to in-stock items only, then build
   // a lookup map keyed by (id, name, barcode) for O(1) scanning.
-  const { products, productsById, outOfStockProducts, categories } = useMemo(() => {
+  const { products, productsById, outOfStockProducts, expiredProducts, categories } = useMemo(() => {
     const all      = (productData?.data       as IProduct[]) ?? [];
     const stocked  = all.filter((p) => p.qty > 0);
     const outStock = (outOfStockData?.data    as IProduct[]) ?? [];
     const cats     = (categoryData?.data      as any[])     ?? [];
 
+    // Split out expired products — they still have stock but must not be
+    // sellable. They stay out of the main grid (click-add disabled) and out of
+    // barcode lookup so a scan can't add them to the cart.
+    const expired = stocked.filter(isProductExpired);
+    const sellable = stocked.filter((p) => !isProductExpired(p));
+
     // Build a Map for O(1) barcode scan lookups — keyed by multiple identifiers
     const byId: Map<string, IProduct> = new Map();
-    for (const p of stocked) {
+    for (const p of sellable) {
       byId.set(String(p.id),             p);
       byId.set(p.name.toLowerCase(),     p);
       if ((p as any).barcode) byId.set(String((p as any).barcode).toLowerCase(), p);
     }
 
-    return { products: stocked, productsById: byId, outOfStockProducts: outStock, categories: cats };
+    return { products: sellable, productsById: byId, outOfStockProducts: outStock, expiredProducts: expired, categories: cats };
   }, [productData, outOfStockData, categoryData]);
 
   // ── Mutations ──────────────────────────────────────────────
@@ -301,6 +308,7 @@ export default function PosPage() {
         <ProductGrid
           products={products}
           outOfStockProducts={outOfStockProducts}
+          expiredProducts={expiredProducts}
           onAdd={addToCart}
           dark={dark}
           t={t}
