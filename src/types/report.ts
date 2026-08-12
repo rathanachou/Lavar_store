@@ -27,3 +27,20 @@ export interface IDailySalesReport {
   summary: IDailySalesSummary;
   transactions: IReportTransaction[];
 }
+
+/** One day's subtotal within a monthly report */
+export interface IDailySubtotal {
+  date: string;
+  orders: number;
+  totalSales: number;
+  totalDiscount: number;
+  totalItemsSold: number;
+}
+
+/** Response shape for GET /reports/monthly-sales */
+export interface IMonthlySalesReport {
+  success: boolean;
+  date: string;          // "YYYY-MM"
+  summary: IDailySalesSummary;
+  dailyBreakdown: IDailySubtotal[];
+}

@@ -18,6 +18,10 @@ import {
   useDailySalesReport,
   useDownloadDailySalesPdf,
 } from "@/hooks/useDailySalesReport";
+import {
+  useMonthlySalesReport,
+  useDownloadMonthlySalesPdf,
+} from "@/hooks/useMonthlySalesReport";
 import type {
   IDailySales,
   IOrderWithDetails,
@@ -63,12 +67,22 @@ export default function Reports() {
   const [dailyLoading,  setDailyLoading]  = useState(false);
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
 
+  // Month picker defaults to current month
+  const now = new Date();
+  const [reportYear,  setReportYear]  = useState(now.getFullYear());
+  const [reportMonth, setReportMonth] = useState(now.getMonth() + 1);
+
   // ── New Daily Sales Report (TanStack Query) ─────────────
   const { data: reportData, isLoading: reportLoading } = useDailySalesReport(
     activeTab === "daily" ? selectedDate : ""
   );
   const { mutate: downloadPdf, isPending: pdfDownloading } =
     useDownloadDailySalesPdf();
+
+  const { data: monthlyReport, isLoading: monthlyLoading } =
+    useMonthlySalesReport(activeTab === "monthly" ? reportYear : 0, activeTab === "monthly" ? reportMonth : 0);
+  const { mutate: downloadMonthlyPdf, isPending: monthlyPdfDownloading } =
+    useDownloadMonthlySalesPdf();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -330,22 +344,124 @@ export default function Reports() {
 
       {/* ── MONTHLY TAB ── */}
       {activeTab === "monthly" && (
-        <div className="bg-white rounded-xl shadow p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <ShoppingBag className="h-5 w-5 text-indigo-500" />
-            <h2 className="text-lg font-semibold">Monthly Sales</h2>
+        <div className="bg-white rounded-xl shadow p-6 space-y-4">
+          {/* Header + controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-indigo-500" />
+              <h2 className="text-lg font-semibold">Monthly Sales</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="month"
+                value={`${reportYear}-${String(reportMonth).padStart(2, "0")}`}
+                onChange={(e) => {
+                  const [y, m] = e.target.value.split("-").map(Number);
+                  setReportYear(y);
+                  setReportMonth(m);
+                }}
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+              <button
+                onClick={() => downloadMonthlyPdf({ year: reportYear, month: reportMonth })}
+                disabled={monthlyPdfDownloading}
+                className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <FileDown className="h-4 w-4" />
+                {monthlyPdfDownloading ? "Downloading..." : "Download PDF"}
+              </button>
+            </div>
           </div>
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={monthlySales}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip formatter={(value) => [`$${Number(value ?? 0).toFixed(2)}`, "Sales"]} />
-              <Legend />
-              <Bar dataKey="totalSales"  fill="#6366f1" name="Sales ($)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="totalOrders" fill="#22c55e" name="Orders"    radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+
+          {monthlyLoading ? (
+            <div className="flex items-center gap-2 text-gray-400 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Loading monthly data...</span>
+            </div>
+          ) : !monthlyReport ? (
+            <p className="text-gray-400 text-sm">No data for this month.</p>
+          ) : (
+            <>
+              {/* Summary cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <SummaryCard label="Total Orders"  value={String(monthlyReport.summary.totalTransactions ?? 0)}                          icon={<Receipt     className="h-5 w-5" />} color="bg-indigo-50 text-indigo-700" />
+                <SummaryCard label="Total Sales"   value={`$${Number(monthlyReport.summary.netSales    ?? 0).toFixed(2)}`}       icon={<DollarSign  className="h-5 w-5" />} color="bg-green-50 text-green-700"   />
+                <SummaryCard label="Discount"      value={`$${Number(monthlyReport.summary.totalDiscount ?? 0).toFixed(2)}`}       icon={<Tag         className="h-5 w-5" />} color="bg-yellow-50 text-yellow-700" />
+                <SummaryCard label="Net Sales"     value={`$${Number(monthlyReport.summary.netSales      ?? 0).toFixed(2)}`}       icon={<CheckCircle className="h-5 w-5" />} color="bg-blue-50 text-blue-700"     />
+              </div>
+
+              {/* Payment method breakdown */}
+              {monthlyReport.summary.paymentMethodBreakdown && (
+                <div className="border border-gray-100 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-indigo-500" />
+                    Payment Method Breakdown
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {Object.entries(monthlyReport.summary.paymentMethodBreakdown).map(
+                      ([method, amount]) => {
+                        const labels: Record<string, string> = {
+                          CASH: "Cash", ABA_PAYWAY: "ABA PayWay", KHQR: "KHQR", OTHER: "Other",
+                        };
+                        const colors: Record<string, string> = {
+                          CASH: "bg-emerald-50 text-emerald-700",
+                          ABA_PAYWAY: "bg-blue-50 text-blue-700",
+                          KHQR: "bg-amber-50 text-amber-700",
+                          OTHER: "bg-gray-50 text-gray-700",
+                        };
+                        return (
+                          <div key={method} className={`rounded-lg p-3 ${colors[method] || "bg-gray-50 text-gray-700"}`}>
+                            <p className="text-xs font-medium opacity-70">{labels[method] || method}</p>
+                            <p className="text-base font-bold">${Number(amount).toFixed(2)}</p>
+                          </div>
+                        );
+                      }
+                    )}
+                    {Number(monthlyReport.summary.rielKhr ?? 0) > 0 && (
+                      <div className="rounded-lg p-3 bg-teal-50 text-teal-700">
+                        <p className="text-xs font-medium">Riel (៛)</p>
+                        <p className="text-base font-bold">៛{Number(monthlyReport.summary.rielKhr).toLocaleString("en-US")}</p>
+                        <p className="text-xs mt-0.5 text-teal-600">
+                          ≈ ${(Number(monthlyReport.summary.rielKhr) / Number(monthlyReport.summary.usdToKhrRate || 4100)).toFixed(2)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Daily subtotals table */}
+              {monthlyReport.dailyBreakdown?.length === 0 ? (
+                <p className="text-gray-400 text-sm">No orders found.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-600 text-left">
+                        {["Date", "Orders", "Items", "Sales", "Discount", "Net"].map((h) => (
+                          <th key={h} className="px-4 py-2 font-medium">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthlyReport.dailyBreakdown.map((d, idx) => (
+                        <tr key={d.date} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-2 font-medium text-gray-700">
+                            {new Date(d.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </td>
+                          <td className="px-4 py-2 text-center">{d.orders}</td>
+                          <td className="px-4 py-2 text-center">{d.totalItemsSold}</td>
+                          <td className="px-4 py-2 text-green-600 font-semibold">${d.totalSales.toFixed(2)}</td>
+                          <td className="px-4 py-2 text-yellow-600">${d.totalDiscount.toFixed(2)}</td>
+                          <td className="px-4 py-2 text-blue-600 font-semibold">${(d.totalSales - d.totalDiscount).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
