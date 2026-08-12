@@ -1,6 +1,6 @@
 // src/components/BarcodeScanner.tsx
 import { useEffect, useRef, useState, useCallback } from "react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import { BrowserMultiFormatReader } from "@zxing/library";
 import { X, Camera, RefreshCw, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -102,11 +102,11 @@ const BarcodeScanner = ({ onScan, onClose }: Props) => {
         const reader = new BrowserMultiFormatReader();
         controlsRef.current = reader;
 
-        reader.decodeFromVideoElement(
+        reader.decodeFromVideoElementContinuously(
           videoRef.current,
-          (result, _err, controls) => {
+          (result) => {
             if (!mountedRef.current) {
-              controls?.stop();
+              reader.stopContinuousDecode();
               return;
             }
             if (result && !scannedRef.current) {
