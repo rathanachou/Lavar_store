@@ -72,7 +72,9 @@ export interface AbaPaywayForm {
   fields: Record<string, string | number>; // all hidden input key/values
 }
 
-/** What POST /api/v1/payments/:orderId returns (interceptor already unwrapped) */
+// Paths are relative to baseURL, which already includes /api/v1
+
+/** What POST /payments/:orderId returns (interceptor already unwrapped) */
 export interface CreatePaymentResponse {
   success: boolean;
   data: {
@@ -81,7 +83,7 @@ export interface CreatePaymentResponse {
   };
 }
 
-/** What POST /api/v1/payments/:tranId/check returns */
+/** What POST /payments/:tranId/check returns */
 export interface CheckPaymentResponse {
   success: boolean;
   status: string;           // "0" = success, other = failed
@@ -91,32 +93,33 @@ export interface CheckPaymentResponse {
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 
-/** POST /api/v1/payments/:orderId — returns ABA PayWay form fields */
+/** POST /payments/:orderId — returns ABA PayWay form fields */
 export const createPayment = async (
   orderId: number
 ): Promise<CreatePaymentResponse> => {
-  return api.post(`/api/v1/payments/${orderId}`);
+  return api.post(`/payments/${orderId}`);
 };
 
-/** POST /api/v1/payments/:tranId/check — verify ABA payment result */
+/** POST /payments/:tranId/check — verify ABA payment result */
 export const checkPayment = async (
   tranId: string
 ): Promise<CheckPaymentResponse> => {
-  return api.post(`/api/v1/payments/${tranId}/check`);
+  return api.post(`/payments/${tranId}/check`);
 };
 
 // ─── ORDERS ───────────────────────────────────────────────────────────────────
 
 /**
- * POST /api/v1/orders/:id/confirm
+ * POST /orders/:id/confirm
  * Deducts stock and moves order from "pending" → "confirmed".
  * Must be called after ABA redirects back with status=0.
  */
 export const confirmOrder = async (orderId: number, paymentMethod?: string): Promise<{ success: boolean }> => {
-  return api.post(`/api/v1/orders/${orderId}/confirm`, paymentMethod ? { paymentMethod } : {});
+  return api.post(`/orders/${orderId}/confirm`, paymentMethod ? { paymentMethod } : {});
 };
 
 // ─── KHQR ─────────────────────────────────────────────────────────────────────
+// KHQR endpoints live outside the v1 API, so they use absolute paths.
 
 /** POST /api/payment/khqr/individual */
 export const generateIndividualKHQR = async (

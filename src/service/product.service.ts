@@ -2,6 +2,8 @@ import type { ProductSchema } from "../components/Products/ProductForm";
 import type { IProductResponse } from "../types/product";
 import api from "./libs/axios";
 
+// Paths are relative to baseURL, which already includes /api/v1
+
 // ─── Fetch Products ───────────────────────────────────────
 export const fetchProduct = async (
   search?: string,
@@ -9,7 +11,7 @@ export const fetchProduct = async (
   limit: number = 10,
   categoryId?: number
 ) => {
-  const data = await api.get<any, IProductResponse>("/api/v1/products", {
+  const data = await api.get<any, IProductResponse>("/products", {
     params: { search, page, limit, categoryId },
   });
   return data;
@@ -20,7 +22,7 @@ export const fetchOutOfStockProducts = async (
   search?: string,
   categoryId?: number
 ) => {
-  const data = await api.get<any, IProductResponse>("/api/v1/products", {
+  const data = await api.get<any, IProductResponse>("/products", {
     params: { search, categoryId, page: 1, limit: 100, inStock: false },
   });
   return data;
@@ -28,54 +30,54 @@ export const fetchOutOfStockProducts = async (
 
 // ─── CRUD ─────────────────────────────────────────────────
 export const createProduct = async (request: ProductSchema) => {
-  return await api.post("/api/v1/products", request);
+  return await api.post("/products", request);
 };
 
 export const createBulkProducts = async (requests: ProductSchema[]) => {
   return await Promise.all(
-    requests.map((item) => api.post("/api/v1/products", item))
+    requests.map((item) => api.post("/products", item))
   );
 };
 
 export const updateProduct = async (id: number, request: ProductSchema) => {
-  return await api.put(`/api/v1/products/${id}`, request);
+  return await api.put(`/products/${id}`, request);
 };
 
 export const deleteProduct = async (id: number) => {
-  return await api.delete(`/api/v1/products/${id}`);
+  return await api.delete(`/products/${id}`);
 };
 
 // ─── Images ───────────────────────────────────────────────
 export const uploadProductImage = async (id: number, file: File) => {
   const formData = new FormData();
   formData.append("file", file);
-  return await api.post(`/api/v1/products/${id}/upload`, formData, {
+  return await api.post(`/products/${id}/upload`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
 
 export const deleteProductImage = async (imageId: number, productId: number) => {
-  return await api.delete(`/api/v1/products/${productId}/images/${imageId}`);
+  return await api.delete(`/products/${productId}/images/${imageId}`);
 };
 
 // ─── Stock ────────────────────────────────────────────────
 export const fetchProductStock = async (id: number) => {
-  const res = await api.get(`/api/v1/products/${id}/stock`);
+  const res = await api.get(`/products/${id}/stock`);
   return res;
 };
 
 export const stockIn = async (id: number, qty: number) => {
-  const res = await api.patch(`/api/v1/products/${id}/stock/in`, { qty });
+  const res = await api.patch(`/products/${id}/stock/in`, { qty });
   return res;
 };
 
 export const stockOut = async (id: number, qty: number) => {
-  const res = await api.patch(`/api/v1/products/${id}/stock/out`, { qty });
+  const res = await api.patch(`/products/${id}/stock/out`, { qty });
   return res;
 };
 
 export const fetchLowStockProducts = async (threshold?: number) => {
-  const res = await api.get(`/api/v1/products/stock/low`, {
+  const res = await api.get(`/products/stock/low`, {
     params: { threshold },
   });
   return res;
@@ -83,7 +85,7 @@ export const fetchLowStockProducts = async (threshold?: number) => {
 
 // ─── Near-Expiry & Discounts ─────────────────────────────
 export const fetchNearExpiryProducts = async (days: number = 7) => {
-  const res = await api.get(`/api/v1/products/near-expiry`, {
+  const res = await api.get(`/products/near-expiry`, {
     params: { days },
   });
   return res;
@@ -93,7 +95,7 @@ export const setProductDiscount = async (
   id: number,
   request: { discount_percent: number }
 ) => {
-  const res = await api.patch(`/api/v1/products/${id}/discount`, request);
+  const res = await api.patch(`/products/${id}/discount`, request);
   return res;
 };
 
@@ -112,7 +114,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
 
 // Print all active products as barcode PDF
 export const printAllBarcodes = async () => {
-  const res = await api.get("/api/v1/products/barcodes/print", {
+  const res = await api.get("/products/barcodes/print", {
     responseType: "blob",
   });
   const blob = new Blob([res as any], { type: "application/pdf" });
@@ -121,7 +123,7 @@ export const printAllBarcodes = async () => {
 
 // Print a single product barcode PDF
 export const printSingleBarcode = async (id: number) => {
-  const res = await api.get(`/api/v1/products/${id}/barcode/print`, {
+  const res = await api.get(`/products/${id}/barcode/print`, {
     responseType: "blob",
   });
   const blob = new Blob([res as any], { type: "application/pdf" });
@@ -131,7 +133,7 @@ export const printSingleBarcode = async (id: number) => {
 // Print selected product IDs as barcode PDF
 export const printSelectedBarcodes = async (ids: number[]) => {
   const res = await api.post(
-    "/api/v1/products/barcodes/print",
+    "/products/barcodes/print",
     { ids },
     { responseType: "blob" }
   );
@@ -140,5 +142,5 @@ export const printSelectedBarcodes = async (ids: number[]) => {
 };
 
 export const getBarcodeImageUrl = (id: number): string => {
-  return `${import.meta.env.VITE_API_URL}/api/v1/products/${id}/barcode`;
+  return `${import.meta.env.VITE_API_URL}/products/${id}/barcode`;
 };

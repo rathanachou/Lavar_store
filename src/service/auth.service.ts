@@ -57,36 +57,37 @@ export interface ResetPasswordResponse {
 }
 
 //  interceptor unwraps .data already — no need for res.data
+//  Paths are relative to baseURL, which already includes /api/v1
 export const authLogin = async (request: PayLoad): Promise<AuthResponse> => {
-  return api.post("/api/v1/auth/login", request);
+  return api.post("/auth/login", request);
 };
 
 export const authRegister = async (
   request: RegisterPayload
 ): Promise<RegisterResponse> => {
-  return api.post("/api/v1/auth/register", request);
+  return api.post("/auth/register", request);
 };
 
 export const verifyEmail = async (
   token: string
 ): Promise<VerifyEmailResponse> => {
-  return api.get(`/api/v1/auth/verify-email?token=${encodeURIComponent(token)}`);
+  return api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`);
 };
 
 export const resendVerificationEmail = async (
   email: string
 ): Promise<ResendVerificationResponse> => {
-  return api.post("/api/v1/auth/resend-verification", { email });
+  return api.post("/auth/resend-verification", { email });
 };
 
 export const forgotPassword = async (
   payload: ForgotPasswordPayload
 ): Promise<ForgotPasswordResponse> => {
-  return api.post("/api/v1/auth/forgot-password", payload);
+  return api.post("/auth/forgot-password", payload);
 };
 
 export const resetPassword = async (
   payload: ResetPasswordPayload
 ): Promise<ResetPasswordResponse> => {
-  return api.post("/api/v1/auth/reset-password", payload);
+  return api.post("/auth/reset-password", payload);
 };

@@ -30,40 +30,41 @@ export interface GetOrdersParams {
 }
 
 // ─── SERVICES ─────────────────────────────────────────────
+// Paths are relative to baseURL, which already includes /api/v1
 
-/** POST /api/v1/orders — creates order (pending, no stock deduction) */
+/** POST /orders — creates order (pending, no stock deduction) */
 export const createOrder = async (
   payload: OrderPayload
 ): Promise<{ success: boolean; data: OrderResponse }> =>
-  api.post("/api/v1/orders", payload);
+  api.post("/orders", payload);
 
-/** GET /api/v1/orders */
+/** GET /orders */
 export const getOrders = async (
   params?: GetOrdersParams
 ): Promise<{ success: boolean; data: OrderResponse[] }> =>
-  api.get("/api/v1/orders", { params });
+  api.get("/orders", { params });
 
-/** GET /api/v1/orders/:id */
+/** GET /orders/:id */
 export const getOrderById = async (
   id: number
 ): Promise<{ success: boolean; data: OrderResponse }> =>
-  api.get(`/api/v1/orders/${id}`);
+  api.get(`/orders/${id}`);
 
-/** PATCH /api/v1/orders/:id/cancel — cancels order, restores stock if completed */
+/** PATCH /orders/:id/cancel — cancels order, restores stock if completed */
 export const cancelOrder = async (
   id: number,
   reason?: string
 ): Promise<{ success: boolean }> =>
-  api.patch(`/api/v1/orders/${id}/cancel`, { reason });
+  api.patch(`/orders/${id}/cancel`, { reason });
 
-/** POST /api/v1/orders/:id/confirm — deducts stock, marks order completed */
+/** POST /orders/:id/confirm — deducts stock, marks order completed */
 export const completeOrder = async (
   id: number
 ): Promise<{ success: boolean }> =>
-  api.post(`/api/v1/orders/${id}/confirm`);
+  api.post(`/orders/${id}/confirm`);
 
-/** GET /api/v1/orders/:id/doc */
+/** GET /orders/:id/doc */
 export const generateOrderDoc = async (
   id: number
 ): Promise<{ success: boolean; data: Blob }> =>
-  api.get(`/api/v1/orders/${id}/doc`, { responseType: "blob" });
+  api.get(`/orders/${id}/doc`, { responseType: "blob" });

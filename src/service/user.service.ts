@@ -10,15 +10,17 @@ export interface IUser {
   createdAt: string;
 }
 
+// Paths are relative to baseURL, which already includes /api/v1
+
 export const getUsers = async (): Promise<IUser[]> => {
-  const res = await api.get("/api/v1/users");
+  const res = await api.get("/users");
   return (res as any).data;
 };
 
 export const deleteUser = async (id: number): Promise<void> => {
-  await api.delete(`/api/v1/users/${id}`);
+  await api.delete(`/users/${id}`);
 };
 
 export const resetPassword = async (id: number, newPassword: string): Promise<void> => {
-  await api.patch(`/api/v1/users/${id}/reset-password`, { newPassword });
+  await api.patch(`/users/${id}/reset-password`, { newPassword });
 };

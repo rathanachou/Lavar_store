@@ -1,13 +1,15 @@
 import api from "./libs/axios";
 import type { IDailySalesReport } from "@/types/report";
 
+// Paths are relative to baseURL, which already includes /api/v1
+
 /**
  * Fetch daily sales report data (JSON summary + transactions)
  */
 export const getDailySalesReport = async (
   date: string
 ): Promise<IDailySalesReport> => {
-  return api.get("/api/v1/reports/daily-sales", {
+  return api.get("/reports/daily-sales", {
     params: { date },
   });
 };
@@ -19,7 +21,7 @@ export const getDailySalesReport = async (
  */
 export const downloadDailySalesPdf = async (date: string): Promise<void> => {
   const response = await api.get(
-    "/api/v1/reports/daily-sales/pdf",
+    "/reports/daily-sales/pdf",
     {
       params: { date },
       responseType: "blob",
