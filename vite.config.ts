@@ -12,7 +12,13 @@ export default defineConfig({
   },
   define: {
     global: "globalThis",
-    "process.env": {},             
+    "process.env": {},
+    // Recharts 2.x ships internal CommonJS wrappers that reference `module`
+    // and `exports`, which don't exist in Vite's ESM output. Without these
+    // polyfills, the lazy-loaded Dashboard chunk crashes with
+    // "Uncaught ReferenceError: module is not defined" on production.
+    module: "{}",
+    exports: "{}",
   },
   optimizeDeps: {
     include: [
