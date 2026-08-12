@@ -10,6 +10,8 @@ export interface OrderItem {
 export interface OrderPayload {
   discount: number;
   items: OrderItem[];
+  /** Display currency at POS checkout — "USD" | "KHR". Backend defaults to USD. */
+  currency?: "USD" | "KHR";
 }
 
 export interface OrderResponse {

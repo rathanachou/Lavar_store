@@ -70,6 +70,10 @@ export interface IOrder {
   customerId: number;
   location: string;
   createdAt: string;
+  /** Currency paid at POS checkout — "USD" | "KHR" */
+  currency?: string;
+  /** Riel amount paid when currency = "KHR"; null for USD orders */
+  amountKhr?: number | null;
   orderDetails?: IOrderDetail[];
 }
 

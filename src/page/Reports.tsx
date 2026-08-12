@@ -210,7 +210,7 @@ export default function Reports() {
                     <CreditCard className="h-4 w-4 text-indigo-500" />
                     Payment Method Breakdown
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     {Object.entries(reportData.summary.paymentMethodBreakdown).map(
                       ([method, amount]) => {
                         const labels: Record<string, string> = {
@@ -247,6 +247,22 @@ export default function Reports() {
                           </div>
                         );
                       }
+                    )}
+
+                    {/* Riel (៛) — total KHR collected that day, with USD equivalent */}
+                    {Number(reportData.summary.rielKhr ?? 0) > 0 && (
+                      <div className="rounded-lg p-3 bg-teal-50 text-teal-700">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-xs font-medium">Riel (៛)</span>
+                        </div>
+                        <p className="text-base font-bold">
+                          ៛{Number(reportData.summary.rielKhr).toLocaleString("en-US")}
+                        </p>
+                        <p className="text-xs mt-0.5 text-teal-600">
+                          ≈ $
+                          {(Number(reportData.summary.rielKhr) / Number(reportData.summary.usdToKhrRate || 4100)).toFixed(2)}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>

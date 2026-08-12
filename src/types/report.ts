@@ -13,6 +13,10 @@ export interface IDailySalesSummary {
   totalRevenue: number;
   totalTransactions: number;
   totalItemsSold: number;
+  /** Total Riel (៛) collected that day, from orders charged in KHR. 0 when none. */
+  rielKhr?: number;
+  /** Exchange rate used (KHR per 1 USD) — for the Riel → USD equivalent. */
+  usdToKhrRate?: number;
   paymentMethodBreakdown: Record<string, number>;
 }
 

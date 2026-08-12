@@ -193,6 +193,9 @@ export default function PosPage() {
 
     const payload: OrderPayload = {
       discount,
+      // Record the display currency the cashier charged in so the backend can
+      // persist the Riel amount and the Daily Report can show it.
+      currency,
       items: cartItems.map((item) => ({ productId: item.id, qty: item.qty })),
     };
 
@@ -268,7 +271,7 @@ export default function PosPage() {
       },
     });
   }, [
-    cartItems, cartSummary, discount,
+    cartItems, cartSummary, discount, currency,
     createOrderMutate, createPaymentMutate,
     handleConfirmOrder, handleCancelOrder,
   ]);
