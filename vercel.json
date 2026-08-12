@@ -1,19 +1,5 @@
 {
-  "routes": [
-    {
-      "src": "/api/v1/(.*)",
-      "dest": "https://lavar-store-backend.onrender.com/api/v1/$1"
-    },
-    {
-      "src": "/uploads/(.*)",
-      "dest": "https://lavar-store-backend.onrender.com/uploads/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
