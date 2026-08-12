@@ -119,39 +119,48 @@ export const confirmOrder = async (orderId: number, paymentMethod?: string): Pro
 };
 
 // ─── KHQR ─────────────────────────────────────────────────────────────────────
-// KHQR endpoints live outside the v1 API, so they use absolute paths.
+// KHQR endpoints live outside the v1 API, so they use a direct fetch against
+// VITE_API_URL + /api (not the v1 axios instance).
+
+const apiBase = (import.meta.env.VITE_API_URL as string).replace(/\/api\/v1$/, "");
+
+async function khqrPost<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${apiBase}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`KHQR ${path} failed: ${res.status}`);
+  return res.json();
+}
 
 /** POST /api/payment/khqr/individual */
 export const generateIndividualKHQR = async (
   params: IndividualKHQRParams
-): Promise<{ success: boolean; data: KHQRResult }> => {
-  return api.post("/api/payment/khqr/individual", params);
-};
+): Promise<{ success: boolean; data: KHQRResult }> =>
+  khqrPost("/api/payment/khqr/individual", params);
 
 /** POST /api/payment/khqr/merchant */
 export const generateMerchantKHQR = async (
   params: MerchantKHQRParams
-): Promise<{ success: boolean; data: KHQRResult }> => {
-  return api.post("/api/payment/khqr/merchant", params);
-};
+): Promise<{ success: boolean; data: KHQRResult }> =>
+  khqrPost("/api/payment/khqr/merchant", params);
 
 /** POST /api/payment/khqr/verify */
 export const verifyKHQR = async (
   qr: string
-): Promise<{ success: boolean; data: { isValid: boolean } }> => {
-  return api.post("/api/payment/khqr/verify", { qr });
-};
+): Promise<{ success: boolean; data: { isValid: boolean } }> =>
+  khqrPost("/api/payment/khqr/verify", { qr });
 
 /** POST /api/payment/khqr/decode */
 export const decodeKHQR = async (
   qr: string
-): Promise<{ success: boolean; data: KHQRDecoded }> => {
-  return api.post("/api/payment/khqr/decode", { qr });
-};
+): Promise<{ success: boolean; data: KHQRDecoded }> =>
+  khqrPost("/api/payment/khqr/decode", { qr });
 
 /** POST /api/payment/khqr/deeplink */
 export const generateDeepLink = async (
   params: DeepLinkParams
-): Promise<{ success: boolean; data: { shortLink: string } }> => {
-  return api.post("/api/payment/khqr/deeplink", params);
-};
+): Promise<{ success: boolean; data: { shortLink: string } }> =>
+  khqrPost("/api/payment/khqr/deeplink", params);
