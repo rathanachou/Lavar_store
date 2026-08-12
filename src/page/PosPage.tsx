@@ -28,8 +28,7 @@ import PaymentSuccessDialog from "@/components/PaymentSuccessDialog";
 import PrintReceipt         from "@/components/PrintReceipt";
 import { useCancelOrder, useCreateOrder } from "./Orders";
 import { isProductExpired } from "@/utils/expiry";
-
-// ✅ removed useAbaRedirect — ABA uses modal callback, not URL redirect
+import { useAbaRedirect } from "@/hooks/useAbaRedirect";
 
 export default function PosPage() {
   const { dark, toggle } = useDarkMode();
@@ -108,6 +107,15 @@ export default function PosPage() {
   const { mutate: createPaymentMutate } = useCreatePayment();
   const { mutate: cancelOrderMutate }   = useCancelOrder();
   const { mutate: confirmOrderMutate }  = useConfirmOrder();
+
+  // ── ABA redirect fallback ──────────────────────────────────
+  // Catches ?tran_id=...&status=0 after the ABA SDK redirects the
+  // parent window back to the app (continue_success_url).
+  useAbaRedirect({
+    onConfirmed: () => {
+      console.log("✅ ABA redirect fallback — order confirmed");
+    },
+  });
 
   // ── Invalidate all caches ──────────────────────────────────
   const invalidateAll = useCallback(() => {
@@ -232,6 +240,12 @@ export default function PosPage() {
             setReceiptTotal(snapshotTotal);
             setReceiptOrderId(orderId);
             setIsOpen(false);
+
+            // Persist order ID in both storages so the redirect fallback
+            // in useAbaRedirect can confirm the order even if localStorage
+            // is wiped by a 401 interceptor during page reload.
+            localStorage.setItem("pending_order_id", String(orderId));
+            sessionStorage.setItem("pending_order_id", String(orderId));
 
             const launched = launchAbaCheckout(
               payway,
