@@ -95,9 +95,12 @@ export interface CheckPaymentResponse {
 
 /** POST /payments/:orderId — returns ABA PayWay form fields */
 export const createPayment = async (
-  orderId: number
+  orderId: number,
+  origin?: string
 ): Promise<CreatePaymentResponse> => {
-  return api.post(`/payments/${orderId}`);
+  const body: Record<string, unknown> = {};
+  if (origin) body.origin = origin;
+  return api.post(`/payments/${orderId}`, body);
 };
 
 /** POST /payments/:tranId/check — verify ABA payment result */

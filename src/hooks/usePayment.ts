@@ -27,7 +27,8 @@ const invalidateProductCaches = (queryClient: ReturnType<typeof useQueryClient>)
 export const useCreatePayment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (orderId: number) => createPayment(orderId),
+    mutationFn: (orderId: number) =>
+      createPayment(orderId, window.location.origin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
     },
