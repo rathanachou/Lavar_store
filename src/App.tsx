@@ -32,13 +32,6 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const CashierOrAdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, role } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (role !== 'admin' && role !== 'cashier') return <Navigate to="/admin/pos" replace />;
-  return <>{children}</>;
-};
-
 function AppRoutes() {
   const { role } = useAuth();
 
@@ -80,7 +73,7 @@ function AppRoutes() {
           <AdminRoute><Reports /></AdminRoute>
         } />
         <Route path="/admin/reports/daily" element={
-          <CashierOrAdminRoute><Reports /></CashierOrAdminRoute>
+          <AdminRoute><Reports /></AdminRoute>
         } />
         <Route path="/admin/reports/monthly" element={
           <AdminRoute><Reports /></AdminRoute>

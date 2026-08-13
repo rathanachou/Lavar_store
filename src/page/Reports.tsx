@@ -45,6 +45,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { isCashier } from "@/utils/auth";
+import { useAuth } from "@/hooks/AuthContext";
 
 type Tab = "daily" | "monthly" | "top-products";
 
@@ -57,7 +58,13 @@ function getTabFromPath(pathname: string): Tab {
 export default function Reports() {
   const location  = useLocation();
   const navigate  = useNavigate();
+  const { role }  = useAuth();
   const activeTab = getTabFromPath(location.pathname);
+
+  if (role !== "admin") {
+    navigate("/admin/pos", { replace: true });
+    return null;
+  }
 
   const [monthlySales,  setMonthlySales]  = useState<any[]>([]);
   const [topProducts,   setTopProducts]   = useState<any[]>([]);
