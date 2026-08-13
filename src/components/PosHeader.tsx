@@ -23,7 +23,7 @@ export default function PosHeader({ dark, toggleDark, currency, toggleCurrency, 
           <Store style={{ width: 18, height: 18, color: "#fff" }} />
         </div>
         <div>
-          <p style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, lineHeight: 1 }}>LAVARSTORE</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, lineHeight: 1 }}>LEVA STORE</p>
           <p style={{ fontSize: 11, color: t.textMuted, marginTop: 2 }}>Point of Sale</p>
         </div>
       </div>

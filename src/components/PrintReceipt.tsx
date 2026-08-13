@@ -107,7 +107,7 @@ export default function PrintReceipt({
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
             </div>
-            <h2 className="text-lg font-bold tracking-widest uppercase">Levarstore</h2>
+            <h2 className="text-lg font-bold tracking-widest uppercase">LEVA STORE</h2>
             <p className="text-xs text-gray-500">POS System</p>
             <p className="text-xs text-gray-400 mt-1">{dateStr} — {timeStr}</p>
             {orderId && (

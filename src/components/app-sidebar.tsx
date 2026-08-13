@@ -210,7 +210,7 @@ export function AppSidebar() {
             <GalleryVerticalEnd style={{ width: 17, height: 17, color: "#fff" }} />
           </div>
           <div>
-            <p style={{ fontSize: 13, fontWeight: 700, color: T.textPrimary, lineHeight: 1, margin: 0 }}>Levarstore</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: T.textPrimary, lineHeight: 1, margin: 0 }}>LEVA STORE</p>
             <p style={{ fontSize: 10, color: T.accent, margin: "3px 0 0", letterSpacing: "0.05em" }}>POS System</p>
           </div>
         </div>
