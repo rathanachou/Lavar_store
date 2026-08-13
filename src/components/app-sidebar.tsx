@@ -176,7 +176,9 @@ export function AppSidebar() {
         ],
       },
       { title: "Users", url: "/admin/users", icon: Users },
-    ] as NavItem[] : []),
+    ] as NavItem[] : [
+      { title: "Daily Report", url: "/admin/reports/daily", icon: BarChart2 },
+    ]),
   ];
 
   const initials = currentUser?.name

@@ -26,6 +26,7 @@ import type {
   IDailySales,
   IOrderWithDetails,
 } from "@/types/dashboard";
+import dayjs from "dayjs";
 import {
   TrendingUp,
   ShoppingBag,
@@ -43,6 +44,7 @@ import {
   Wallet,
   Smartphone,
 } from "lucide-react";
+import { isCashier } from "@/utils/auth";
 
 type Tab = "daily" | "monthly" | "top-products";
 
@@ -72,12 +74,20 @@ export default function Reports() {
   const [reportYear,  setReportYear]  = useState(now.getFullYear());
   const [reportMonth, setReportMonth] = useState(now.getMonth() + 1);
 
+  const cashierView = isCashier();
+
   // ── New Daily Sales Report (TanStack Query) ─────────────
+  const effectiveDate = cashierView
+    ? new Date().toISOString().split("T")[0]
+    : selectedDate;
+
   const { data: reportData, isLoading: reportLoading } = useDailySalesReport(
-    activeTab === "daily" ? selectedDate : ""
+    activeTab === "daily" ? effectiveDate : ""
   );
   const { mutate: downloadPdf, isPending: pdfDownloading } =
     useDownloadDailySalesPdf();
+
+  const handleDailyPdfDownload = () => downloadPdf(effectiveDate);
 
   const { data: monthlyReport, isLoading: monthlyLoading } =
     useMonthlySalesReport(activeTab === "monthly" ? reportYear : 0, activeTab === "monthly" ? reportMonth : 0);
@@ -125,11 +135,16 @@ export default function Reports() {
     "top-products": "/admin/reports",
   };
 
-  const TABS: { key: Tab; label: string }[] = [
+  const ADMIN_TABS: { key: Tab; label: string }[] = [
     { key: "daily",        label: "Daily Report"  },
     { key: "monthly",      label: "Monthly Sales" },
     { key: "top-products", label: "Top Products"  },
   ];
+  const CASHIER_TABS: { key: Tab; label: string }[] = [
+    { key: "daily",        label: "Daily Report"  },
+    { key: "top-products", label: "Top Products"  },
+  ];
+  const visibleTabs = cashierView ? CASHIER_TABS : ADMIN_TABS;
 
   if (loading) {
     return (
@@ -156,7 +171,7 @@ export default function Reports() {
 
       {/* Tab Bar */}
       <div className="flex gap-2 border-b border-gray-200">
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => navigate(TAB_ROUTES[tab.key])}
@@ -181,16 +196,23 @@ export default function Reports() {
             <div className="flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-indigo-500" />
               <h2 className="text-lg font-semibold">Daily Report</h2>
+              {cashierView && (
+                <span className="text-xs text-gray-400 font-normal">
+                  — Today, {dayjs(effectiveDate).format("MMMM D, YYYY")}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
+              {!cashierView && (
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+              )}
               <button
-                onClick={() => downloadPdf(selectedDate)}
+                onClick={handleDailyPdfDownload}
                 disabled={pdfDownloading}
                 className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
               >
