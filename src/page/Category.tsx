@@ -27,7 +27,7 @@ const Category = () => {
   const [searchInput, setSearchInput] = useState("");
   const [value]=   useDebounce(searchInput,500)
    console.log("value", value)
-   const { data,} = useCategories(value);
+   const { data,} = useCategories(value.toLowerCase());
 
   const [category, setCategory] = useState<ICategory | undefined>(undefined);
 
@@ -71,7 +71,7 @@ const Category = () => {
           <div className="flex gap-4 mb-6">
           <Input
             className="w-[200px]"
-            placeholder="Search product..."
+            placeholder="Search category..."
             value={searchInput}
             onChange={(e) =>  setSearchInput(e.target.value)}
            
