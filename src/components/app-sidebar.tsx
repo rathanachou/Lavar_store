@@ -3,10 +3,11 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   GalleryVerticalEnd, ScanQrCode, LayoutDashboard, Package,
-  Users, BarChart2, UserPlus, ChevronRight, ChevronDown, LogOut,
+  Users, BarChart2, UserPlus, ShoppingCart, ChevronRight, ChevronDown, LogOut,
 } from "lucide-react";
 import { isAdmin, getCurrentUser, getRole } from "@/utils/auth";
 import { useAuth } from "@/hooks/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogDescription,
@@ -63,14 +64,28 @@ function SideNavItem({
     ? currentPath.startsWith(item.url)
     : currentPath === item.url;
   const [open, setOpen] = useState(isActive);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (hasChildren && currentPath.startsWith(item.url)) setOpen(true);
   }, [currentPath, item.url, hasChildren]);
 
+  // Responsive tap targets: larger on mobile/tablet (<768px), compact on desktop
+  const padY = isMobile ? "12px" : "8px";
+  const padX = isMobile ? "16px" : "12px";
+  const iconSize = isMobile ? 20 : 16;
+  const fontSize = isMobile ? 15 : 13;
+  const subPadY = isMobile ? "10px" : "6px";
+  const subPadX = isMobile ? "14px" : "10px";
+  const subFontSize = isMobile ? 14 : 12;
+  const subDotSize = isMobile ? 6 : 5;
+  const chevronSize = isMobile ? 16 : 13;
+  const itemMargin = isMobile ? 4 : 2;
+  const subMargin = isMobile ? 6 : 4;
+
   const baseStyle: React.CSSProperties = {
-    display: "flex", alignItems: "center", gap: 10,
-    padding: "8px 12px", borderRadius: 10, marginBottom: 2,
+    display: "flex", alignItems: "center", gap: isMobile ? 12 : 10,
+    padding: `${padY} ${padX}`, borderRadius: 10, marginBottom: itemMargin,
     cursor: "pointer", transition: "all 0.15s",
     background: isActive ? T.accentBg : "transparent",
     color:      isActive ? T.accentText : T.text,
@@ -89,19 +104,19 @@ function SideNavItem({
         onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = T.hoverBg; (e.currentTarget as HTMLElement).style.color = T.textPrimary; } }}
         onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = T.text; } }}
       >
-        <item.icon style={{ width: 16, height: 16, flexShrink: 0, color: isActive ? T.accent : T.textMuted }} />
-        <span style={{ fontSize: 13, flex: 1 }}>{item.title}</span>
+        <item.icon style={{ width: iconSize, height: iconSize, flexShrink: 0, color: isActive ? T.accent : T.textMuted }} />
+        <span style={{ fontSize, flex: 1 }}>{item.title}</span>
         {hasChildren ? (
           open
-            ? <ChevronDown  style={{ width: 13, height: 13, color: T.textMuted }} />
-            : <ChevronRight style={{ width: 13, height: 13, color: T.textMuted }} />
+            ? <ChevronDown  style={{ width: chevronSize, height: chevronSize, color: T.textMuted }} />
+            : <ChevronRight style={{ width: chevronSize, height: chevronSize, color: T.textMuted }} />
         ) : isActive ? (
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.accentDot, flexShrink: 0 }} />
+          <div style={{ width: subDotSize, height: subDotSize, borderRadius: "50%", background: T.accentDot, flexShrink: 0 }} />
         ) : null}
       </button>
 
       {hasChildren && open && (
-        <div style={{ marginLeft: 28, marginBottom: 4 }}>
+        <div style={{ marginLeft: isMobile ? 32 : 28, marginBottom: subMargin }}>
           {item.items!.map((sub) => {
             const subActive = currentPath === sub.url;
             return (
@@ -109,9 +124,9 @@ function SideNavItem({
                 key={sub.url}
                 onClick={() => navigate(sub.url)}
                 style={{
-                  display: "flex", alignItems: "center", gap: 8,
-                  padding: "6px 10px", borderRadius: 8, marginBottom: 1,
-                  fontSize: 12, transition: "all 0.15s", width: "100%",
+                  display: "flex", alignItems: "center", gap: isMobile ? 10 : 8,
+                  padding: `${subPadY} ${subPadX}`, borderRadius: 8, marginBottom: subMargin,
+                  fontSize: subFontSize, transition: "all 0.15s", width: "100%",
                   border: "none", cursor: "pointer", textAlign: "left",
                   color:      subActive ? T.accentText : T.text,
                   background: subActive ? T.accentSub  : "transparent",
@@ -120,9 +135,9 @@ function SideNavItem({
                 onMouseEnter={e => { if (!subActive) (e.currentTarget as HTMLButtonElement).style.background = T.hoverBg; }}
                 onMouseLeave={e => { if (!subActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
               >
-                <div style={{ width: 5, height: 5, borderRadius: "50%", flexShrink: 0, background: subActive ? T.subDotActive : T.subDotIdle }} />
+                <div style={{ width: subDotSize, height: subDotSize, borderRadius: "50%", flexShrink: 0, background: subActive ? T.subDotActive : T.subDotIdle }} />
                 <span style={{ flex: 1 }}>{sub.title}</span>
-                {subActive && <div style={{ width: 5, height: 5, borderRadius: "50%", background: T.accentDot, flexShrink: 0 }} />}
+                {subActive && <div style={{ width: subDotSize, height: subDotSize, borderRadius: "50%", background: T.accentDot, flexShrink: 0 }} />}
               </button>
             );
           })}
@@ -155,28 +170,37 @@ export function AppSidebar() {
     navigate("/login");     // redirect to login page
   };
 
+  // Items visible to both admin and cashier
+  const sharedItems: NavItem[] = [
+    { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
+    {
+      title: "Reports", url: "/admin/reports", icon: BarChart2,
+      items: [
+        { title: "Daily Report", url: "/admin/reports/daily" },
+      ],
+    },
+  ];
+
+  // Admin-only items
+  const adminItems: NavItem[] = [
+    { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
+    {
+      title: "Products", url: "/admin/products", icon: Package,
+      items: [
+        { title: "All Products", url: "/admin/products" },
+        { title: "Near Expiry",  url: "/admin/products/near-expiry" },
+        { title: "Categories",   url: "/admin/categories" },
+      ],
+    },
+    { title: "Inventory", url: "/admin/inventory", icon: Package },
+    { title: "Stock Movements", url: "/admin/stock-movements", icon: BarChart2 },
+    { title: "Users", url: "/admin/users", icon: Users },
+  ];
+
   const navItems: NavItem[] = [
     { title: "POS", url: "/admin/pos", icon: ScanQrCode },
-    ...(adminOnly ? [
-      { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
-      {
-        title: "Products", url: "/admin/products", icon: Package,
-        items: [
-          { title: "All Products", url: "/admin/products" },
-          { title: "Near Expiry",  url: "/admin/products/near-expiry" },
-          { title: "Categories",   url: "/admin/categories" },
-        ],
-      },
-      {
-        title: "Reports", url: "/admin/reports", icon: BarChart2,
-        items: [
-          { title: "All Reports", url: "/admin/reports" },
-          { title: "Daily",       url: "/admin/reports/daily" },
-          { title: "Monthly",     url: "/admin/reports/monthly" },
-        ],
-      },
-      { title: "Users", url: "/admin/users", icon: Users },
-    ] as NavItem[] : []),
+    ...sharedItems,
+    ...(adminOnly ? adminItems : []),
   ];
 
   const initials = currentUser?.name
