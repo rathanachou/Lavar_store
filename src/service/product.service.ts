@@ -71,8 +71,8 @@ export const stockIn = async (id: number, qty: number) => {
   return res;
 };
 
-export const stockOut = async (id: number, qty: number) => {
-  const res = await api.patch(`/products/${id}/stock/out`, { qty });
+export const stockOut = async (id: number, qty: number, type?: "ADJUSTMENT" | "DAMAGE", reason?: string) => {
+  const res = await api.patch(`/products/${id}/stock/out`, { qty, type, reason });
   return res;
 };
 

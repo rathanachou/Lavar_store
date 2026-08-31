@@ -151,13 +151,16 @@ export const useStockIn = () => {
 export const useStockOut = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, qty }: { id: number; qty: number }) => stockOut(id, qty),
+    mutationFn: ({ id, qty, type, reason }: { id: number; qty: number; type?: "ADJUSTMENT" | "DAMAGE"; reason?: string }) =>
+      stockOut(id, qty, type, reason),
     onSuccess: (_, variables) => {
-      toast.success("Stock deducted successfully");
+      const label = variables.type === "DAMAGE" ? "Damage recorded" : "Stock adjusted";
+      toast.success(`${label}: -${variables.qty} units`);
       queryClient.invalidateQueries({ queryKey: ["product-stock", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["products-out-of-stock"] });
       queryClient.invalidateQueries({ queryKey: ["products-low-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Failed to deduct stock");

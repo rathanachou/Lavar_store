@@ -1,4 +1,4 @@
-import { CirclePlus } from "lucide-react";
+import { CirclePlus, Settings, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { IProduct } from "../types/product";
@@ -14,11 +14,19 @@ import { columns } from "../components/Products/columns";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "../components/ui/dialog";
+import { Textarea } from "../components/ui/textarea";
 import {
   Pagination,
   PaginationContent,
@@ -27,7 +35,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../components/ui/pagination";
-import { useProduct, useDeleteProduct } from "../hooks/useProduct";
+import { useProduct, useDeleteProduct, useStockOut } from "../hooks/useProduct";
+import { toast } from "sonner";
 import PrintBarcodesButton from "@/components/Products/Printbarcodesbutton";
 
 const Product = () => {
@@ -40,6 +49,37 @@ const Product = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [selectedProduct, setSelectedProduct] = useState<IProduct | undefined>(undefined);
+
+  // ── Adjustment / Damage dialog ───────────────────────────
+  const [adjOpen, setAdjOpen] = useState(false);
+  const [adjProduct, setAdjProduct] = useState<IProduct | null>(null);
+  const [adjQty, setAdjQty] = useState(1);
+  const [adjReason, setAdjReason] = useState("");
+  const [adjType, setAdjType] = useState<"ADJUSTMENT" | "DAMAGE">("ADJUSTMENT");
+
+  const { mutate: stockOutMutate } = useStockOut();
+
+  const openAdjDialog = (product: IProduct, type: "ADJUSTMENT" | "DAMAGE") => {
+    setAdjProduct(product);
+    setAdjType(type);
+    setAdjQty(1);
+    setAdjReason("");
+    setAdjOpen(true);
+  };
+
+  const handleStockOut = () => {
+    if (!adjProduct || !adjQty || adjQty <= 0) return;
+    if (!adjReason.trim()) {
+      toast.error("Reason is required for stock adjustments");
+      return;
+    }
+    stockOutMutate(
+      { id: adjProduct.id, qty: adjQty, type: adjType, reason: adjReason.trim() },
+      {
+        onSuccess: () => setAdjOpen(false),
+      }
+    );
+  };
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -132,9 +172,68 @@ const Product = () => {
       />
 
       <DataTable
-        columns={columns({ onEdit, onDelete, onViewBatches })}
+        columns={columns({ onEdit, onDelete, onViewBatches, onRecordAdjustment: (p) => openAdjDialog(p, "ADJUSTMENT"), onRecordDamage: (p) => openAdjDialog(p, "DAMAGE") })}
         data={productData?.data ?? []}
       />
+
+      {/* ── Adjustment / Damage Dialog ────────────────────── */}
+      <Dialog open={adjOpen} onOpenChange={setAdjOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {adjType === "DAMAGE" ? "Record Damage" : "Record Adjustment"}
+            </DialogTitle>
+            <DialogDescription>
+              {adjProduct?.name} — Current stock: {adjProduct?.qty ?? 0}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Type</label>
+              <Select
+                value={adjType}
+                onValueChange={(v) => setAdjType(v as "ADJUSTMENT" | "DAMAGE")}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ADJUSTMENT">Adjustment</SelectItem>
+                  <SelectItem value="DAMAGE">Damage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Quantity to Remove</label>
+              <Input
+                type="number"
+                min={1}
+                max={adjProduct?.qty ?? 0}
+                value={adjQty}
+                onChange={(e) => setAdjQty(Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Reason (required)</label>
+              <Textarea
+                placeholder={adjType === "DAMAGE" ? "e.g. Broken during handling" : "e.g. Physical count correction"}
+                value={adjReason}
+                onChange={(e) => setAdjReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdjOpen(false)}>Cancel</Button>
+            <Button
+              variant={adjType === "DAMAGE" ? "destructive" : "default"}
+              onClick={handleStockOut}
+              disabled={!adjQty || adjQty <= 0 || !adjReason.trim()}
+            >
+              {adjType === "DAMAGE" ? "Record Damage" : "Apply Adjustment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ─── Footer ───────────────────────────────────────── */}
       <div className="flex justify-between items-center mt-4">

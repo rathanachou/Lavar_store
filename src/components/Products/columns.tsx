@@ -17,6 +17,8 @@ import {
   SquarePen,
   Trash2,
   Package,
+  Settings,
+  AlertTriangle,
 } from "lucide-react";
 import type { IProduct } from "../../types/product";
 
@@ -25,12 +27,16 @@ interface Props {
   onEdit: (product: IProduct) => void;
   onDelete: (product: IProduct) => void;
   onViewBatches?: (product: IProduct) => void;
+  onRecordAdjustment?: (product: IProduct) => void;
+  onRecordDamage?: (product: IProduct) => void;
 }
 
 export const columns = ({
   onEdit,
   onDelete,
   onViewBatches,
+  onRecordAdjustment,
+  onRecordDamage,
 }: Props): ColumnDef<IProduct>[] => [
   {
     accessorKey: "No",
@@ -136,6 +142,17 @@ export const columns = ({
           {onViewBatches && (
             <DropdownMenuItem onClick={() => onViewBatches(row.original)}>
               View Batches
+            </DropdownMenuItem>
+          )}
+
+          {onRecordAdjustment && (
+            <DropdownMenuItem onClick={() => onRecordAdjustment(row.original)}>
+              <Settings className="text-purple-500" /> Record Adjustment
+            </DropdownMenuItem>
+          )}
+          {onRecordDamage && (
+            <DropdownMenuItem onClick={() => onRecordDamage(row.original)}>
+              <AlertTriangle className="text-orange-500" /> Record Damage
             </DropdownMenuItem>
           )}
 
