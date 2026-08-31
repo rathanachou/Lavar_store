@@ -132,7 +132,7 @@ export default function Inventory() {
     }
     if (expiryStatus) {
       items = items.filter((item) => {
-        const status = getExpiryStatus(item.batch?.expireDate || null);
+        const status = getExpiryStatus(item.productBatch?.expireDate || null);
         return status === expiryStatus;
       });
     }
@@ -271,7 +271,7 @@ export default function Inventory() {
             </TableHeader>
             <TableBody>
               {filtered.map((item) => {
-                const batch = item.batch;
+                const batch = item.productBatch;
                 const product = item.product;
                 const expiryBadge = getExpiryBadge(batch?.expireDate || null);
                 const statusBadge = getStockStatusBadge(item.stockStatus || "", item.availableQty);
@@ -393,7 +393,7 @@ function SummaryCard({
 }
 
 function BatchDetailContent({ inventory }: { inventory: IInventory }) {
-  const batch = inventory.batch;
+  const batch = inventory.productBatch;
   const product = inventory.product;
   const expiryBadge = getExpiryBadge(batch?.expireDate || null);
 

@@ -8,7 +8,7 @@ export interface IInventory {
   availableQty: number;
   reservedQty: number;
   stockStatus: "AVAILABLE" | "LOW_STOCK" | "OUT_OF_STOCK" | "EXPIRED";
-  batch: IProductBatch;
+  productBatch: IProductBatch;
   product: IProduct;
   createdAt: string;
   updatedAt: string;
