@@ -27,6 +27,9 @@ export interface GetOrdersParams {
   page?: number;
   limit?: number;
   search?: string;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 // ─── SERVICES ─────────────────────────────────────────────
@@ -41,7 +44,7 @@ export const createOrder = async (
 /** GET /orders */
 export const getOrders = async (
   params?: GetOrdersParams
-): Promise<{ success: boolean; data: OrderResponse[] }> =>
+): Promise<{ success: boolean; data: OrderResponse[]; total?: number; page?: number; limit?: number; totalPages?: number }> =>
   api.get("/orders", { params });
 
 /** GET /orders/:id */
@@ -68,3 +71,13 @@ export const generateOrderDoc = async (
   id: number
 ): Promise<{ success: boolean; data: Blob }> =>
   api.get(`/orders/${id}/doc`, { responseType: "blob" });
+
+/** POST /orders/:id/return — create a return for a completed order
+ *  Body: { orderDetailId: number, qty: number, reason?: string }
+ *  Backend sets refundMethod default "Cash" and status "COMPLETED".
+ *  Backend sets processedBy from req.user — do NOT send it. */
+export const processReturn = async (
+  orderId: number,
+  body: { orderDetailId: number; qty: number; reason?: string }
+): Promise<{ success: boolean; message: string; data: any }> =>
+  api.post(`/orders/${orderId}/return`, body);

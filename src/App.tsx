@@ -2,6 +2,10 @@ import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import './App.css';
 import DashboardLaysOut from './layouts/DashboardLaysOut';
 import Product          from './page/Products';
+import ProductBatches   from './page/ProductBatches';
+import Orders           from './page/Orders';
+import Inventory        from './page/Inventory';
+import StockMovements   from './page/StockMovements';
 import NearExpiry       from './page/NearExpiry';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster }      from 'sonner';
@@ -29,6 +33,15 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, role } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (role !== 'admin') return <Navigate to="/admin/pos" replace />;
+  return <>{children}</>;
+};
+
+// ─── StaffRoute ───────────────────────────────────────────────
+// Allows admin and cashier roles (used for Orders and Reports).
+const StaffRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, role } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (role !== 'admin' && role !== 'cashier') return <Navigate to="/admin/pos" replace />;
   return <>{children}</>;
 };
 
@@ -63,20 +76,32 @@ function AppRoutes() {
         <Route path="/admin/products" element={
           <AdminRoute><Product /></AdminRoute>
         } />
+        <Route path="/admin/products/:id/batches" element={
+          <AdminRoute><ProductBatches /></AdminRoute>
+        } />
         <Route path="/admin/products/near-expiry" element={
           <AdminRoute><NearExpiry /></AdminRoute>
+        } />
+        <Route path="/admin/inventory" element={
+          <AdminRoute><Inventory /></AdminRoute>
+        } />
+        <Route path="/admin/stock-movements" element={
+          <AdminRoute><StockMovements /></AdminRoute>
         } />
         <Route path="/admin/categories" element={
           <AdminRoute><Category /></AdminRoute>
         } />
+        <Route path="/admin/orders" element={
+          <StaffRoute><Orders /></StaffRoute>
+        } />
         <Route path="/admin/reports" element={
-          <AdminRoute><Reports /></AdminRoute>
+          <StaffRoute><Reports /></StaffRoute>
         } />
         <Route path="/admin/reports/daily" element={
-          <AdminRoute><Reports /></AdminRoute>
+          <StaffRoute><Reports /></StaffRoute>
         } />
         <Route path="/admin/reports/monthly" element={
-          <AdminRoute><Reports /></AdminRoute>
+          <StaffRoute><Reports /></StaffRoute>
         } />
         <Route path="/admin/users" element={
           <AdminRoute><User /></AdminRoute>

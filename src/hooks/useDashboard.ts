@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import {
   getDashboardSummary,
+  getTopProducts,
   getSalesByPeriod,
   getDailySales,
   getSalesByCategory,
 } from "../service/dashboard.service";
 import type {
   IDashboardSummary,
+  ITopProduct,
   IMonthlySale,
   ICategorySale,
   IDailySales,
@@ -18,6 +20,7 @@ export const useDashboard = (period: "Today" | "Week" | "Month" | "Year" = "Week
   const [periodSales, setPeriodSales]   = useState<IMonthlySale[]>([]);
   const [dailySales, setDailySales]     = useState<IDailySales | null>(null);
   const [categoryData, setCategoryData] = useState<ICategorySale[]>([]);
+  const [topProducts, setTopProducts]   = useState<ITopProduct[]>([]);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState<string | null>(null);
   const [refreshKey, setRefreshKey]     = useState(0);
@@ -37,8 +40,7 @@ export const useDashboard = (period: "Today" | "Week" | "Month" | "Year" = "Week
           getSalesByCategory(),
         ]);
         setSummary(sum.data);
--       setPeriodSales(periodData.data?.data ?? []);
-+       setPeriodSales(periodData.data ?? []);
+        setPeriodSales(periodData.data ?? []);
         setDailySales(daily);
         setCategoryData(category.data ?? []);
       } catch (err) {
@@ -81,13 +83,13 @@ export const useDashboard = (period: "Today" | "Week" | "Month" | "Year" = "Week
 
   return {
     // Raw API data
-    summary,        
-    periodSales,    
-    dailySales,     
-    categoryData,   
+    summary,
+    periodSales,
+    dailySales,
+    categoryData,
+    topProducts,
 
     // Convenience shortcuts from summary
-    topProducts:   summary?.topProducts   ?? [],
     lowStock:      summary?.lowStock      ?? [],
     totalProducts: summary?.totalProducts ?? 0,
     totalCustomers: summary?.totalCustomers ?? 0,

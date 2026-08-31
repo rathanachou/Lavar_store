@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useAuth } from "@/hooks/AuthContext";
+import { isAdmin } from "@/utils/auth";
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -11,7 +13,7 @@ import {
 } from "recharts";
 import {
   ShoppingCart, Package, BarChart3,
-   Bell, ChevronDown, TrendingUp, TrendingDown,
+  Bell, ChevronDown, TrendingUp, TrendingDown,
   Sun, Moon, RefreshCw, AlertTriangle, Store,
 } from "lucide-react";
 
@@ -120,6 +122,22 @@ export default function Dashboard() {
     error,
     refetch,
   } = useDashboard(period);
+
+  const { role } = useAuth();
+  const adminOnly = isAdmin();
+
+  // ── Navigation helpers ──────────────────────────────────────
+  const dailyReportPath = "/admin/reports/daily";
+  const monthlyReportPath = "/admin/reports/monthly";
+
+  const navigateToDailyReport = () => navigate(dailyReportPath);
+  const navigateToMonthlyReport = () => {
+    if (adminOnly) navigate(monthlyReportPath);
+  };
+  const navigateToOrders = () => navigate("/admin/orders");
+  const navigateToProducts = () => {
+    if (adminOnly) navigate("/admin/products");
+  };
 
   // ── Monthly target ───────────────────────────────────────────
   const MONTHLY_TARGET = 5000;
@@ -290,11 +308,12 @@ export default function Dashboard() {
           */}
           <div className="grid grid-cols-4 gap-4">
             <MetricCard
-              label="Today's Sales"
+              label="Total Revenue"
               value={`$${Number(summary?.today?.totalSales ?? 0).toFixed(2)}`}
               sub={`${summary?.today?.totalOrders ?? 0} orders today`}
               accent="#3b82f6"
               t={t}
+              onClick={navigateToDailyReport}
               icon={<div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(59,130,246,0.2)" }}>
                 <span style={{ color: "#3b82f6", fontWeight: 700, fontSize: 16 }}>$</span>
               </div>}
@@ -305,6 +324,7 @@ export default function Dashboard() {
               sub={`$${Number(summary?.today?.totalSales ?? 0).toFixed(2)} revenue`}
               accent="#22c55e"
               t={t}
+              onClick={navigateToOrders}
               icon={<div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(34,197,94,0.2)" }}>
                 <ShoppingCart className="h-5 w-5" style={{ color: "#22c55e" }} />
               </div>}
@@ -315,6 +335,7 @@ export default function Dashboard() {
               sub={`${lowStock.length} items low stock`}
               accent="#8b5cf6"
               t={t}
+              onClick={navigateToProducts}
               icon={<div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(139,92,246,0.2)" }}>
                 <Package className="h-5 w-5" style={{ color: "#8b5cf6" }} />
               </div>}
@@ -325,6 +346,7 @@ export default function Dashboard() {
               sub={`${summary?.monthly?.totalOrders ?? 0} orders this month`}
               accent="#f59e0b"
               t={t}
+              onClick={adminOnly ? navigateToMonthlyReport : undefined}
               icon={<div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(245,158,11,0.2)" }}>
                 <BarChart3 className="h-5 w-5" style={{ color: "#f59e0b" }} />
               </div>}
@@ -453,7 +475,9 @@ export default function Dashboard() {
             {/*
               Calculated from summary.monthly.totalSales vs MONTHLY_TARGET constant
             */}
-            <div className="rounded-xl p-4 flex flex-col items-center justify-center"
+            <div
+              onClick={adminOnly ? navigateToMonthlyReport : undefined}
+              className={`rounded-xl p-4 flex flex-col items-center justify-center ${adminOnly ? "cursor-pointer hover:shadow-md transition-all" : ""}`}
               style={{ background: t.cardBg, border: `1px solid ${t.cardBorder}`, boxShadow: t.cardShadow }}>
               <h2 className="text-sm font-semibold mb-4 self-start" style={{ color: t.textPrimary }}>Monthly Target</h2>
               <TargetRing pct={targetPct} color="#3b82f6" dark={dark} />
@@ -486,8 +510,13 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dailySales.data.slice(0, 5).map((tx: any, i: number) => (
-                      <tr key={i} style={{ borderBottom: `1px solid ${t.tableBorder}` }}>
+                    {dailySales.data.slice(0, 5).map((tx: any) => (
+                      <tr key={tx.id}
+                        onClick={() => navigate(`/admin/orders`)}
+                        className="cursor-pointer transition-colors"
+                        onMouseEnter={e => (e.currentTarget.style.background = t.btnBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                        style={{ borderBottom: `1px solid ${t.tableBorder}` }}>
                         {/* id from Orders table */}
                         <td className="py-2" style={{ color: t.textMuted }}>#{tx.id}</td>
                         {/* orderDetails is included via Sequelize association */}
@@ -529,8 +558,13 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {lowStock.map((p: any, i: number) => (
-                      <tr key={p.id ?? i} style={{ borderBottom: `1px solid ${t.tableBorder}` }}>
+                    {lowStock.map((p: any) => (
+                      <tr key={p.id}
+                        onClick={() => { if (adminOnly) navigate(`/admin/products`); }}
+                        className={adminOnly ? "cursor-pointer transition-colors" : ""}
+                        onMouseEnter={e => { if (adminOnly) (e.currentTarget as HTMLElement).style.background = t.btnBg; }}
+                        onMouseLeave={e => { if (adminOnly) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                        style={{ borderBottom: `1px solid ${t.tableBorder}` }}>
                         {/* name, qty, price from Product model */}
                         <td className="py-2" style={{ color: t.textSecondary }}>{p.name}</td>
                         <td className="py-2 font-semibold" style={{ color: t.textPrimary }}>{p.qty}</td>
@@ -559,9 +593,12 @@ export default function Dashboard() {
 }
 
 // ─── MetricCard ───────────────────────────────────────────────
-function MetricCard({ label, value, sub, accent, t, icon }: any) {
+function MetricCard({ label, value, sub, accent, t, icon, onClick }: any) {
+  const clickable = typeof onClick === "function";
   return (
-    <div className="rounded-xl p-4 relative overflow-hidden"
+    <div
+      onClick={onClick}
+      className={`rounded-xl p-4 relative overflow-hidden transition-all ${clickable ? "cursor-pointer hover:shadow-md hover:scale-[1.02]" : ""}`}
       style={{ background: t.cardBg, border: `1px solid ${t.cardBorder}`, boxShadow: t.cardShadow }}>
       <div className="flex items-start justify-between mb-3">
         {icon}

@@ -1,6 +1,7 @@
 export interface IProduct {
   id: number;
   name: string;
+  sku?: string;
   price: number;
   qty: number;
   categoryId: number | undefined;
@@ -59,6 +60,8 @@ export interface IOrderDetail {
   productPrice: number;
   qty: number;
   amount: number;
+  /** Quantity of this line item that has been returned (0 = none, < qty = partial, = qty = full) */
+  returnedQty?: number;
 }
 
 export interface IOrder {
@@ -70,6 +73,14 @@ export interface IOrder {
   customerId: number;
   location: string;
   createdAt: string;
+  /** ID of the user (cashier/admin) who created this order */
+  userId?: number;
+  /** Snapshot of the user who processed the order */
+  user?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
   /** Currency paid at POS checkout — "USD" | "KHR" */
   currency?: string;
   /** Riel amount paid when currency = "KHR"; null for USD orders */

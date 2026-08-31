@@ -26,9 +26,10 @@ import BarcodeScanner       from "@/components/BarcodeScanner";
 import OrderSummaryDialog   from "@/components/OrderSummaryDialog";
 import PaymentSuccessDialog from "@/components/PaymentSuccessDialog";
 import PrintReceipt         from "@/components/PrintReceipt";
-import { useCancelOrder, useCreateOrder } from "./Orders";
+import { useCancelOrder, useCreateOrder, useOrderById } from "./Orders";
 import { isProductExpired } from "@/utils/expiry";
 import { useAbaRedirect } from "@/hooks/useAbaRedirect";
+import { getCurrentUser } from "@/utils/auth";
 
 export default function PosPage() {
   const { dark, toggle } = useDarkMode();
@@ -64,6 +65,7 @@ export default function PosPage() {
   const [receiptSubtotal, setReceiptSubtotal] = useState(0);
   const [receiptDiscount, setReceiptDiscount] = useState(0);
   const [receiptOrderId, setReceiptOrderId] = useState<number | null>(null);
+  const [receiptCashierName, setReceiptCashierName] = useState<string>("");
 
   // ── Cart ───────────────────────────────────────────────────
   const {
@@ -75,6 +77,24 @@ export default function PosPage() {
   const { data: productData }    = useProduct(searchText, 1, 100, selectedCategory);
   const { data: outOfStockData } = useOutOfStockProducts(searchText, selectedCategory);
   const { data: categoryData }   = useCategories();
+
+  // ── Fetch order user (cashier) for receipt ────────────────
+  const { data: receiptOrderData } = useOrderById(receiptOrderId ?? 0);
+  useEffect(() => {
+    const orderUser = (receiptOrderData?.data?.user ?? {}) as Record<string, unknown>;
+    if (orderUser.firstName && orderUser.lastName) {
+      setReceiptCashierName(`${orderUser.firstName} ${orderUser.lastName}`);
+    } else {
+      // Fallback to currently logged-in user — only used if backend
+      // doesn't include the user association on the order
+      const current = getCurrentUser() ?? {};
+      if (current.firstName && current.lastName) {
+        setReceiptCashierName(`${current.firstName} ${current.lastName}`);
+      } else {
+        setReceiptCashierName("");
+      }
+    }
+  }, [receiptOrderData]);
 
   // ── Memoized product data ──────────────────────────────────
   // Derive products list filtered to in-stock items only, then build
@@ -383,6 +403,7 @@ export default function PosPage() {
           subtotal={receiptSubtotal}
           discountAmount={receiptDiscount}
           orderId={receiptOrderId}
+          cashierName={receiptCashierName}
           formatPrice={formatPrice}
           onClose={() => setShowReceipt(false)}
         />

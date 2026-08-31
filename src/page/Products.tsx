@@ -35,6 +35,7 @@ const Product = () => {
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -79,6 +80,10 @@ const Product = () => {
     }
   };
 
+  const onViewBatches = (product: IProduct) => {
+    navigate(`/admin/products/${product.id}/batches`);
+  };
+
   const handlePrevPage = () => {
     if (pagination?.prevPage) setPage(pagination.prevPage);
   };
@@ -101,7 +106,7 @@ const Product = () => {
       <div className="flex justify-between mb-4">
         <div className="flex gap-2">
           <Input
-            className="w-[200px]"
+            className="w-50"
             placeholder="Search product..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -127,7 +132,7 @@ const Product = () => {
       />
 
       <DataTable
-        columns={columns({ onEdit, onDelete })}
+        columns={columns({ onEdit, onDelete, onViewBatches })}
         data={productData?.data ?? []}
       />
 

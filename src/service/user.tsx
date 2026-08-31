@@ -25,7 +25,7 @@ function RoleBadge({ role }: { role: string }) {
 function UserAvatar({ firstName, lastName }: { firstName: string; lastName: string }) {
   const initials = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
   const colors   = ["bg-indigo-500","bg-violet-500","bg-pink-500","bg-amber-500","bg-teal-500","bg-cyan-500"];
-  const color    = colors[(firstName.charCodeAt(0) ?? 0) % colors.length];
+  const color    = colors[(firstName?.[0]?.charCodeAt(0) ?? 0) % colors.length];
   return (
     <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>
       {initials || "?"}
@@ -181,6 +181,7 @@ function RegisterModal({ open, onClose }: { open: boolean; onClose: () => void }
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
                 <option value="cashier">Cashier</option>
                 <option value="admin">Admin</option>
+             
               </select>
             </div>
           </div>

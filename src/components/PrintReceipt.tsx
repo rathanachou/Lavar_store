@@ -8,6 +8,8 @@ interface PrintReceiptProps {
   subtotal?: number;
   discountAmount?: number;
   orderId?: number | null;
+  /** Name of the cashier who processed this order (from Order.user) */
+  cashierName?: string;
   formatPrice: (usd: number) => string;
   onClose: () => void;
 }
@@ -18,6 +20,7 @@ export default function PrintReceipt({
   subtotal,
   discountAmount,
   orderId,
+  cashierName,
   formatPrice,
   onClose,
 }: PrintReceiptProps) {
@@ -110,6 +113,9 @@ export default function PrintReceipt({
             <h2 className="text-lg font-bold tracking-widest uppercase">LEVA STORE</h2>
             <p className="text-xs text-gray-500">POS System</p>
             <p className="text-xs text-gray-400 mt-1">{dateStr} — {timeStr}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Cashier: <span className="font-medium">{cashierName || "Unknown"}</span>
+            </p>
             {orderId && (
               <p className="text-xs text-gray-500 mt-1">
                 Order #<span className="font-bold">{orderId}</span>

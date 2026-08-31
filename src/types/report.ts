@@ -42,7 +42,7 @@ export interface IDailySubtotal {
 /** Response shape for GET /reports/monthly-sales */
 export interface IMonthlySalesReport {
   success: boolean;
-  date: string;          // "YYYY-MM"
+  date: string;          // "YYYY-MM" for single month, "YYYY-MM-DD to YYYY-MM-DD" for range
   summary: IDailySalesSummary;
   dailyBreakdown: IDailySubtotal[];
 }

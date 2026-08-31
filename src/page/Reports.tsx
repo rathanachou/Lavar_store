@@ -22,6 +22,7 @@ import {
   useMonthlySalesReport,
   useDownloadMonthlySalesPdf,
 } from "@/hooks/useMonthlySalesReport";
+import type { IMonthlySalesReport } from "@/types/report";
 import type {
   IDailySales,
   IOrderWithDetails,
@@ -61,7 +62,7 @@ export default function Reports() {
   const { role }  = useAuth();
   const activeTab = getTabFromPath(location.pathname);
 
-  if (role !== "admin") {
+  if (role !== "admin" && role !== "cashier") {
     navigate("/admin/pos", { replace: true });
     return null;
   }
@@ -76,10 +77,14 @@ export default function Reports() {
   const [dailyLoading,  setDailyLoading]  = useState(false);
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
 
-  // Month picker defaults to current month
+  // Date range picker for monthly report — defaults to current month
   const now = new Date();
-  const [reportYear,  setReportYear]  = useState(now.getFullYear());
-  const [reportMonth, setReportMonth] = useState(now.getMonth() + 1);
+  const [reportDateFrom, setReportDateFrom] = useState(
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`
+  );
+  const [reportDateTo, setReportDateTo] = useState(
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`
+  );
 
   const cashierView = isCashier();
 
@@ -97,7 +102,11 @@ export default function Reports() {
   const handleDailyPdfDownload = () => downloadPdf(effectiveDate);
 
   const { data: monthlyReport, isLoading: monthlyLoading } =
-    useMonthlySalesReport(activeTab === "monthly" ? reportYear : 0, activeTab === "monthly" ? reportMonth : 0);
+    useMonthlySalesReport(
+      activeTab === "monthly"
+        ? { dateFrom: reportDateFrom, dateTo: reportDateTo }
+        : { dateFrom: undefined, dateTo: undefined }
+    );
   const { mutate: downloadMonthlyPdf, isPending: monthlyPdfDownloading } =
     useDownloadMonthlySalesPdf();
 
@@ -105,12 +114,16 @@ export default function Reports() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [monthly, top] = await Promise.all([
-          getMonthlySales(),
-          getTopProducts(10),
-        ]);
-        setMonthlySales((monthly as any)?.data || []);
-        setTopProducts((top   as any)?.data || []);
+        const requests = cashierView
+          ? [getTopProducts(10)]
+          : [getMonthlySales(), getTopProducts(10)];
+        const results = await Promise.all(requests);
+        if (!cashierView) {
+          setMonthlySales((results[0] as any)?.data || []);
+          setTopProducts((results[1] as any)?.data || []);
+        } else {
+          setTopProducts((results[0] as any)?.data || []);
+        }
       } catch (error) {
         console.error("Reports error:", error);
       } finally {
@@ -118,7 +131,7 @@ export default function Reports() {
       }
     };
     fetchData();
-  }, []);
+  }, [cashierView]);
 
   useEffect(() => {
     const fetchDaily = async () => {
@@ -382,17 +395,20 @@ export default function Reports() {
             </div>
             <div className="flex items-center gap-2">
               <input
-                type="month"
-                value={`${reportYear}-${String(reportMonth).padStart(2, "0")}`}
-                onChange={(e) => {
-                  const [y, m] = e.target.value.split("-").map(Number);
-                  setReportYear(y);
-                  setReportMonth(m);
-                }}
+                type="date"
+                value={reportDateFrom}
+                onChange={(e) => setReportDateFrom(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+              <span className="text-gray-400 text-sm">to</span>
+              <input
+                type="date"
+                value={reportDateTo}
+                onChange={(e) => setReportDateTo(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
               <button
-                onClick={() => downloadMonthlyPdf({ year: reportYear, month: reportMonth })}
+                onClick={() => downloadMonthlyPdf({ dateFrom: reportDateFrom, dateTo: reportDateTo })}
                 disabled={monthlyPdfDownloading}
                 className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
               >

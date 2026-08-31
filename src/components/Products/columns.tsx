@@ -16,6 +16,7 @@ import {
   Percent,
   SquarePen,
   Trash2,
+  Package,
 } from "lucide-react";
 import type { IProduct } from "../../types/product";
 
@@ -23,11 +24,13 @@ import type { IProduct } from "../../types/product";
 interface Props {
   onEdit: (product: IProduct) => void;
   onDelete: (product: IProduct) => void;
+  onViewBatches?: (product: IProduct) => void;
 }
 
 export const columns = ({
   onEdit,
   onDelete,
+  onViewBatches,
 }: Props): ColumnDef<IProduct>[] => [
   {
     accessorKey: "No",
@@ -41,7 +44,7 @@ export const columns = ({
   {
     header: "Image",
     cell: ({ row }) => (
-      <div className="w-[60px] h-[60px] rounded-md bg-gray-100 overflow-hidden flex items-center justify-center">
+      <div className="w-15 h-15 rounded-md bg-gray-100 overflow-hidden flex items-center justify-center">
         <img
           className="w-full h-full object-contain"
           src={row.original.productImages?.[0]?.imageUrl ?? "/productImages.png"}
@@ -129,6 +132,12 @@ export const columns = ({
           <DropdownMenuItem onClick={() => onEdit(row.original)}>
             <SquarePen /> Edit
           </DropdownMenuItem>
+
+          {onViewBatches && (
+            <DropdownMenuItem onClick={() => onViewBatches(row.original)}>
+              View Batches
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuSeparator />
 

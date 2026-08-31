@@ -5,6 +5,7 @@ import {
   generateOrderDoc,
   getOrderById,
   getOrders,
+  processReturn,
   type GetOrdersParams,
   type OrderPayload,
 } from "@/service/orders.service";
@@ -45,11 +46,14 @@ export const useOrders = (params?: GetOrdersParams) =>
   });
 
 // ─── Get Order by ID ──────────────────────────────────────
-export const useOrderById = (id: number) =>
+export const useOrderById = (
+  id: number,
+  opts?: { enabled?: boolean }
+) =>
   useQuery({
     queryKey: ["orders", id],
     queryFn: () => getOrderById(id),
-    enabled: !!id,
+    enabled: opts?.enabled ?? !!id,
   });
 
 // ─── Generate Order Doc ───────────────────────────────────
@@ -94,5 +98,49 @@ export const useCompleteOrder = () => {
       invalidateProductCaches(queryClient);
     },
     onError: () => toast.error("Failed to complete order ❌"),
+  });
+};
+
+// Re-export the service function so the import is recognized as consumed.
+export { processReturn } from "@/service/orders.service";
+
+// ─── Process Return ──────────────────────────────────────
+export const useProcessReturn = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, orderDetailId, qty, reason }: {
+      orderId: number;
+      orderDetailId: number;
+      qty: number;
+      reason?: string;
+    }) => processReturn(orderId, { orderDetailId, qty, reason }),
+    onSuccess: async (_result, _vars) => {
+      // Backend restored stock + created RETURN movements + Return record.
+      // Invalidate everything that depends on those aggregates,
+      // then await the refetch so callers can close dialogs only
+      // after fresh data is in the cache.
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["order-detail"] });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["products-out-of-stock"] });
+      await queryClient.invalidateQueries({ queryKey: ["products-low-stock"] });
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      await queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
+      toast.success("Return processed — Stock restored");
+    },
+    onError: (error: Error) => {
+      // Surface backend validation messages directly so cashiers
+      // understand why their return was rejected.
+      const msg = error.message || "Failed to process return";
+      if (msg.includes("not completed")) {
+        toast.error("Only completed orders can be returned");
+      } else if (msg.includes("exceeds")) {
+        toast.error("Return quantity exceeds the original order quantity");
+      } else if (msg.includes("orderDetailId")) {
+        toast.error("Invalid item selected for return");
+      } else {
+        toast.error(msg);
+      }
+    },
   });
 };

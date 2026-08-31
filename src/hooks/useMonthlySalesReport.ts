@@ -6,24 +6,49 @@ import {
 import { toast } from "sonner";
 
 /**
- * Fetch monthly sales report data for a given year/month.
+ * Fetch monthly sales report data.
+ *
+ * Mode A — single month: pass year and month.
+ * Mode B — date range: pass dateFrom and dateTo (ISO strings).
  */
-export const useMonthlySalesReport = (year: number, month: number) => {
+export const useMonthlySalesReport = ({
+  year,
+  month,
+  dateFrom,
+  dateTo,
+}: {
+  year?: number;
+  month?: number;
+  dateFrom?: string;
+  dateTo?: string;
+}) => {
+  const hasRange = !!(dateFrom && dateTo);
+  const hasMonth = !!(year && month);
+  const enabled = hasRange || hasMonth;
+
   return useQuery({
-    queryKey: ["monthly-sales-report", year, month],
-    queryFn: () => getMonthlySalesReport(year, month),
-    enabled: year > 0 && month > 0,
+    queryKey: hasRange
+      ? ["monthly-sales-report", "range", dateFrom, dateTo]
+      : ["monthly-sales-report", year, month],
+    queryFn: () => getMonthlySalesReport({ year, month, dateFrom, dateTo }),
+    enabled,
     staleTime: 60_000,
   });
 };
 
 /**
  * Download monthly sales report as PDF.
+ *
+ * Pass either year+month (single month) or dateFrom+dateTo (range).
  */
 export const useDownloadMonthlySalesPdf = () => {
   return useMutation({
-    mutationFn: ({ year, month }: { year: number; month: number }) =>
-      downloadMonthlySalesPdf(year, month),
+    mutationFn: (args: {
+      year?: number;
+      month?: number;
+      dateFrom?: string;
+      dateTo?: string;
+    }) => downloadMonthlySalesPdf(args),
     onSuccess: () => {
       toast.success("PDF report downloaded successfully", {
         description: "The monthly sales report has been saved to your downloads.",

@@ -41,6 +41,7 @@ import {
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  sku: z.string(),
   price: z.number().min(0, "Price must be 0 or more"),
   categoryId: z
     .union([z.undefined(), z.number().min(1, "Category is required")])
@@ -144,6 +145,7 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
   const form = useForm({
     defaultValues: {
       name: product?.name ?? "",
+      sku: product?.sku ?? "",
       price: product?.price ? Number(product.price) : 0,
       categoryId: product?.categoryId || undefined,
       qty: product?.qty ?? 0,
@@ -160,6 +162,7 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
         categoryId: value.categoryId,
         barcode: extraBarcode || undefined,
         expireDate: value.expireDate || null,
+        sku: value.sku,
       };
       setIsLoading(true);
 
@@ -238,6 +241,7 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
   useEffect(() => {
     if (product) {
       form.setFieldValue("name", product.name);
+      form.setFieldValue("sku", product.sku ?? "");
       form.setFieldValue("price", Number(product.price));
       form.setFieldValue("categoryId", product.categoryId);
       form.setFieldValue("qty", product.qty);
@@ -313,6 +317,33 @@ const ProductForm = ({ open, setOpen, product }: Props) => {
                         onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
                         placeholder="Enter product name"
+                        autoComplete="off"
+                      />
+                      {isInvalid && (
+                        <FieldError errors={field.state.meta.errors} />
+                      )}
+                    </Field>
+                  );
+                }}
+              />
+
+              {/* ── SKU ──────────────────────────────────── */}
+              <form.Field
+                name="sku"
+                children={(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>SKU</FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                        placeholder="Enter SKU"
                         autoComplete="off"
                       />
                       {isInvalid && (
