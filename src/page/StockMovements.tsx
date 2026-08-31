@@ -291,7 +291,9 @@ export default function StockMovements() {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <User className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">{movement.user?.name || `#${movement.userId}`}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {movement.user ? `${movement.user.firstName} ${movement.user.lastName}` : "—"}
+                        </span>
                       </div>
                     </TableCell>
                   </TableRow>

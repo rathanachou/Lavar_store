@@ -31,7 +31,8 @@ export interface IStockMovement {
   userId: number;
   user: {
     id: number;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
   };
   batch: IProductBatch;
