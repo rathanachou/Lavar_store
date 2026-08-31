@@ -37,6 +37,7 @@ const LoadingSpinner = () => (
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, role, loading } = useAuth();
+  if (loading) return <LoadingSpinner />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (role !== 'admin') return <Navigate to="/admin/pos" replace />;
   return <>{children}</>;
@@ -53,7 +54,11 @@ const StaffRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function AppRoutes() {
-  const { role } = useAuth();
+  const { role, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <Routes>
