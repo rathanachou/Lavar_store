@@ -14,6 +14,7 @@ import {
 export interface AuthContextType {
   token:           string | null;
   role:            string | null;
+  loading:         boolean;
   login:           (token: string) => void;
   logout:          () => void;
   isAuthenticated: boolean;
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(getAccessToken());
   const [role,  setRole]  = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const decodeRole = (jwt: string): string | null => {
     try {
@@ -34,27 +36,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Decode role on first load if token already exists
+  // On mount: decode role from persisted token (if any), then clear loading.
+  // This must complete before any route guard can redirect.
   useEffect(() => {
-    if (token) setRole(decodeRole(token));
-    else       setRole(null);
-  }, [token]);
+    let cancelled = false;
+    (async () => {
+      if (token) {
+        setRole(decodeRole(token));
+      } else {
+        setRole(null);
+      }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = (newToken: string) => {
     setAccessToken(newToken);
     setToken(newToken);
     setRole(decodeRole(newToken));
+    setLoading(false);
   };
 
   const logout = () => {
     removeAccessToken();
     setToken(null);
     setRole(null);
+    setLoading(false);
   };
 
   return (
     <AuthContext.Provider
-      value={{ token, role, login, logout, isAuthenticated: !!token }}
+      value={{ token, role, loading, login, logout, isAuthenticated: !!token }}
     >
       {children}
     </AuthContext.Provider>

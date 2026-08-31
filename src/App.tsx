@@ -29,8 +29,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+  </div>
+);
+
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, role } = useAuth();
+  const { isAuthenticated, role, loading } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (role !== 'admin') return <Navigate to="/admin/pos" replace />;
   return <>{children}</>;
@@ -39,7 +45,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 // ─── StaffRoute ───────────────────────────────────────────────
 // Allows admin and cashier roles (used for Orders and Reports).
 const StaffRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, role } = useAuth();
+  const { isAuthenticated, role, loading } = useAuth();
+  if (loading) return <LoadingSpinner />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (role !== 'admin' && role !== 'cashier') return <Navigate to="/admin/pos" replace />;
   return <>{children}</>;
