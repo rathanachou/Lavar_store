@@ -14,6 +14,7 @@ import { columns } from "../components/Products/columns";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
