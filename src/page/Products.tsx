@@ -173,7 +173,7 @@ const Product = () => {
       />
 
       <DataTable
-        columns={columns({ onEdit, onDelete, onViewBatches, onRecordAdjustment: (p) => openAdjDialog(p, "ADJUSTMENT"), onRecordDamage: (p) => openAdjDialog(p, "DAMAGE") })}
+        columns={columns({ onEdit, onDelete, onViewBatches, onAdjustStock: (p) => openAdjDialog(p, "ADJUSTMENT") })}
         data={productData?.data ?? []}
       />
 
