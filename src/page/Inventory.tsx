@@ -38,13 +38,23 @@ import {
   Eye,
 } from "lucide-react";
 
+// Internal values match the backend enum (uppercase).
+// Display labels are human-readable title-case for the UI.
 const STOCK_STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
-  { value: "Available", label: "Available" },
-  { value: "Low Stock", label: "Low Stock" },
-  { value: "Out of Stock", label: "Out of Stock" },
-  { value: "Expired", label: "Expired" },
+  { value: "AVAILABLE", label: "Available" },
+  { value: "LOW_STOCK", label: "Low Stock" },
+  { value: "OUT_OF_STOCK", label: "Out of Stock" },
+  { value: "EXPIRED", label: "Expired" },
 ];
+
+// Map display labels (used by summary card clicks) → internal values
+const STATUS_LABEL_TO_VALUE: Record<string, string> = {
+  "Available": "AVAILABLE",
+  "Low Stock": "LOW_STOCK",
+  "Expired": "EXPIRED",
+  "Out of Stock": "OUT_OF_STOCK",
+};
 
 const EXPIRY_STATUS_OPTIONS = [
   { value: "", label: "All" },
@@ -66,21 +76,24 @@ function getExpiryStatus(
   return "ok";
 }
 
-function getStockStatusBadge(status: string, availableQty: number) {
-  switch (status) {
-    case "EXPIRED":
-      return { label: "Expired", className: "bg-red-100 text-red-800", icon: <XCircle className="w-3 h-3" /> };
-    case "OUT_OF_STOCK":
-      return { label: "Out of Stock", className: "bg-red-100 text-red-800", icon: <XCircle className="w-3 h-3" /> };
-    case "LOW_STOCK":
-      return { label: "Low Stock", className: "bg-yellow-100 text-yellow-800", icon: <AlertTriangle className="w-3 h-3" /> };
-    default:
-      if (availableQty === 0)
-        return { label: "Out of Stock", className: "bg-red-100 text-red-800", icon: <XCircle className="w-3 h-3" /> };
-      if (availableQty <= 10)
-        return { label: "Low Stock", className: "bg-yellow-100 text-yellow-800", icon: <AlertTriangle className="w-3 h-3" /> };
-      return { label: "Available", className: "bg-green-100 text-green-800", icon: <CheckCircle className="w-3 h-3" /> };
+// Computes stock status purely client-side from availableQty + expireDate.
+// Priority: expired (date in past) > out-of-stock (qty=0) > low-stock (qty≤10) > available.
+// Returns both an internal enum value (for filtering/logic) and a display label.
+function computeStockStatus(availableQty: number, expireDate?: string | null) {
+  if (expireDate) {
+    const exp = new Date(expireDate);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    exp.setHours(0, 0, 0, 0);
+    if ((exp.getTime() - now.getTime()) < 0)
+      return { status: "EXPIRED" as const, label: "Expired", className: "bg-red-100 text-red-800", icon: <XCircle className="w-3 h-3" /> };
   }
+
+  if (availableQty === 0)
+    return { status: "OUT_OF_STOCK" as const, label: "Out of Stock", className: "bg-red-100 text-red-800", icon: <XCircle className="w-3 h-3" /> };
+  if (availableQty <= 10)
+    return { status: "LOW_STOCK" as const, label: "Low Stock", className: "bg-yellow-100 text-yellow-800", icon: <AlertTriangle className="w-3 h-3" /> };
+  return { status: "AVAILABLE" as const, label: "Available", className: "bg-green-100 text-green-800", icon: <CheckCircle className="w-3 h-3" /> };
 }
 
 function getExpiryBadge(expireDate: string | null) {
@@ -126,27 +139,27 @@ export default function Inventory() {
     let items = inventoryItems;
     if (stockStatus) {
       items = items.filter((item) => {
-        const badge = getStockStatusBadge(item.stockStatus || "", item.availableQty);
-        return badge.label === stockStatus;
+        const { status } = computeStockStatus(item.availableQty, item.productBatch?.expireDate || null);
+        return status === stockStatus;
       });
     }
     if (expiryStatus) {
       items = items.filter((item) => {
-        const status = getExpiryStatus(item.productBatch?.expireDate || null);
-        return status === expiryStatus;
+        const es = getExpiryStatus(item.productBatch?.expireDate || null);
+        return es === expiryStatus;
       });
     }
     return items;
   }, [inventoryItems, stockStatus, expiryStatus]);
 
-  // Card click handler — applies status filter or clears on toggle-off
+  // Card click handler — applies status filter or clears on toggle-off.
+  // Summary cards pass human-readable labels; convert to internal enum values.
   const handleCardClick = (statusLabel: string | null) => {
     if (activeCard === statusLabel) {
-      // Clicking the already-active card clears the filter
       setStockStatus("");
       setActiveCard(null);
     } else {
-      setStockStatus(statusLabel || "");
+      setStockStatus(STATUS_LABEL_TO_VALUE[statusLabel || ""] || "");
       setActiveCard(statusLabel);
     }
   };
@@ -161,11 +174,11 @@ export default function Inventory() {
     let totalAvailable = 0;
 
     for (const item of filtered) {
-      const badge = getStockStatusBadge(item.stockStatus || "", item.availableQty);
-      if (badge.label === "Available") available++;
-      else if (badge.label === "Low Stock") lowStock++;
-      else if (badge.label === "Expired") expired++;
-      else if (badge.label === "Out of Stock") outOfStock++;
+      const { status } = computeStockStatus(item.availableQty, item.productBatch?.expireDate || null);
+      if (status === "AVAILABLE") available++;
+      else if (status === "LOW_STOCK") lowStock++;
+      else if (status === "EXPIRED") expired++;
+      else if (status === "OUT_OF_STOCK") outOfStock++;
       totalQty += item.qty;
       totalAvailable += item.availableQty;
     }
@@ -274,7 +287,7 @@ export default function Inventory() {
                 const batch = item.productBatch;
                 const product = item.product;
                 const expiryBadge = getExpiryBadge(batch?.expireDate || null);
-                const statusBadge = getStockStatusBadge(item.stockStatus || "", item.availableQty);
+                const statusBadge = computeStockStatus(item.availableQty, item.productBatch?.expireDate || null);
 
                 return (
                   <TableRow key={item.id}>
