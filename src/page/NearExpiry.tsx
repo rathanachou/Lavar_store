@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CalendarClock, Percent } from "lucide-react";
+import { CalendarClock, Percent, Package } from "lucide-react";
 import type { IProductBatch } from "@/types/product";
 
 import { Spinner } from "@/components/ui/spinner";
@@ -120,9 +120,26 @@ function DiscountForm({ product, onClose }: DiscountFormProps) {
 
 // ─── Main Page ─────────────────────────────────────────────
 const NearExpiry = () => {
-  const [days, setDays] = useState<number>(7);
+  const [days, setDays] = useState<number>(30);
+  const [daysDisplay, setDaysDisplay] = useState<string>("30");
   const [selected, setSelected] = useState<IProductBatch | null>(null);
   const { data, isLoading } = useNearExpiryProducts(days);
+
+  const clampDays = (raw: string): number => {
+    const n = parseInt(raw, 10);
+    if (isNaN(n)) return 7;
+    return Math.min(365, Math.max(1, n));
+  };
+
+  const handleDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDaysDisplay(e.target.value);
+  };
+
+  const handleDaysBlur = () => {
+    const clamped = clampDays(daysDisplay);
+    setDays(clamped);
+    setDaysDisplay(String(clamped));
+  };
 
   const products = useMemo(
     () => (data?.data as IProductBatch[]) ?? [],
@@ -148,8 +165,9 @@ const NearExpiry = () => {
               type="number"
               min={1}
               max={365}
-              value={days}
-              onChange={(e) => setDays(Math.max(1, e.target.valueAsNumber || 7))}
+              value={daysDisplay}
+              onChange={handleDaysChange}
+              onBlur={handleDaysBlur}
               className="w-20"
             />
             <span className="text-sm text-muted-foreground">days</span>
