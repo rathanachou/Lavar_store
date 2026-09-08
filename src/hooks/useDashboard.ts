@@ -6,13 +6,14 @@ import {
   getDailySales,
   getSalesByCategory,
 } from "../service/dashboard.service";
+import { fetchNearExpiryProducts } from "../service/product.service";
 import type {
   IDashboardSummary,
-  ITopProduct,
   IMonthlySale,
   ICategorySale,
   IDailySales,
 } from "../types/dashboard";
+import type { IProductBatch } from "../types/product";
 import { toast } from "sonner";
 
 export const useDashboard = (period: "Today" | "Week" | "Month" | "Year" = "Week") => {
@@ -20,7 +21,8 @@ export const useDashboard = (period: "Today" | "Week" | "Month" | "Year" = "Week
   const [periodSales, setPeriodSales]   = useState<IMonthlySale[]>([]);
   const [dailySales, setDailySales]     = useState<IDailySales | null>(null);
   const [categoryData, setCategoryData] = useState<ICategorySale[]>([]);
-  const [topProducts, setTopProducts]   = useState<ITopProduct[]>([]);
+  const [topProducts, setTopProducts]   = useState<IDashboardSummary["topProducts"]>([]);
+  const [nearExpiryItems, setNearExpiryItems] = useState<IProductBatch[]>([]);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState<string | null>(null);
   const [refreshKey, setRefreshKey]     = useState(0);
@@ -33,16 +35,20 @@ export const useDashboard = (period: "Today" | "Week" | "Month" | "Year" = "Week
       setLoading(true);
       setError(null);
       try {
-       const [sum, periodData, daily, category] = await Promise.all([
+        const [sum, top, periodData, daily, category, near] = await Promise.all([
           getDashboardSummary(),
+          getTopProducts(5),
           getSalesByPeriod(period),
           getDailySales(),
           getSalesByCategory(),
+          fetchNearExpiryProducts(30),
         ]);
         setSummary(sum.data);
+        setTopProducts((top.data as IDashboardSummary["topProducts"]) ?? []);
         setPeriodSales(periodData.data ?? []);
         setDailySales(daily);
         setCategoryData(category.data ?? []);
+        setNearExpiryItems((near.data as IProductBatch[]) ?? []);
       } catch (err) {
         console.error("Dashboard error:", err);
         setError("data error");
@@ -88,6 +94,7 @@ export const useDashboard = (period: "Today" | "Week" | "Month" | "Year" = "Week
     dailySales,
     categoryData,
     topProducts,
+    nearExpiryItems,
 
     // Convenience shortcuts from summary
     lowStock:      summary?.lowStock      ?? [],

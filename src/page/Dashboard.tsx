@@ -118,6 +118,7 @@ export default function Dashboard() {
     dailySales,
     totalProducts,
     lowStock,
+    nearExpiryItems,
     loading,
     error,
     refetch,
@@ -582,6 +583,55 @@ export default function Dashboard() {
                 </table>
               ) : (
                 <p className="text-xs text-center mt-6" style={{ color: t.textMuted }}> All items well stocked</p>
+              )}
+            </div>
+
+            {/* Near Expiry Alert */}
+            {/*
+              nearExpiryItems[] → from useDashboard hook
+              Fields: product.name, qty, expireDate  (IProductBatch)
+            */}
+            <div className="rounded-xl p-4" style={{ background: t.cardBg, border: `1px solid ${t.cardBorder}`, boxShadow: t.cardShadow }}>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold" style={{ color: t.textPrimary }}>Near Expiry</h2>
+                <button onClick={() => navigate("/admin/products/near-expiry")} className="text-xs cursor-pointer hover:underline" style={{ color: "#3b82f6" }}>View All</button>
+              </div>
+              {nearExpiryItems.length > 0 ? (
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${t.tableBorder}` }}>
+                      {["Product", "Batch Qty", "Days Left", "Expire Date"].map(h => (
+                        <th key={h} className="pb-2 text-left font-medium" style={{ color: t.textMuted }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {nearExpiryItems.slice(0, 5).map((batch: any) => {
+                      const daysLeft = (() => {
+                        if (!batch.expireDate) return Infinity;
+                        const exp = new Date(batch.expireDate);
+                        const now = new Date();
+                        now.setHours(0, 0, 0, 0);
+                        return Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                      })();
+                      const badgeClass = daysLeft <= 3 ? "bg-red-500" : daysLeft <= 7 ? "bg-orange-500" : "bg-green-500";
+                      return (
+                        <tr key={batch.id} style={{ borderBottom: `1px solid ${t.tableBorder}` }}>
+                          <td className="py-2" style={{ color: t.textSecondary }}>{batch.product?.name ?? "—"}</td>
+                          <td className="py-2 font-semibold" style={{ color: t.textPrimary }}>{batch.qty}</td>
+                          <td className="py-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${badgeClass} text-white`}>
+                              {daysLeft === Infinity ? "—" : `${daysLeft}d`}
+                            </span>
+                          </td>
+                          <td className="py-2" style={{ color: t.textMuted }}>{batch.expireDate ?? "—"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-xs text-center mt-6" style={{ color: t.textMuted }}>No items expiring soon</p>
               )}
             </div>
 
