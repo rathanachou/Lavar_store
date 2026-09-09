@@ -17,6 +17,8 @@ import {
   SquarePen,
   Trash2,
   Settings,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import type { IProduct } from "../../types/product";
 
@@ -99,7 +101,28 @@ export const columns = ({
     ),
   },
   {
-    header: "Stock",
+    id: "stock",
+    accessorKey: "qty",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return (
+        <button
+          onClick={() => {
+            if (isSorted === "asc") column.clearSorting();
+            else column.toggleSorting(true);
+          }}
+          className="flex items-center gap-1 hover:text-primary transition-colors"
+        >
+          Stock
+          {isSorted === "asc" && (
+            <ArrowUp className="h-3 w-3 text-indigo-500" />
+          )}
+          {isSorted === "desc" && (
+            <ArrowDown className="h-3 w-3 text-indigo-500" />
+          )}
+        </button>
+      );
+    },
     cell: ({ row }) => {
       const qty = row.original.qty ?? 0;
       return (
@@ -112,7 +135,7 @@ export const columns = ({
               : "bg-green-500"
           }
         >
-          {qty === 0 ? ` ${qty}` : qty <= 10 ? ` ${qty}` : ` ${qty}`}
+          {qty}
         </Badge>
       );
     },
