@@ -22,11 +22,7 @@ import {
   useMonthlySalesReport,
   useDownloadMonthlySalesPdf,
 } from "@/hooks/useMonthlySalesReport";
-import type { IMonthlySalesReport } from "@/types/report";
-import type {
-  IDailySales,
-  IOrderWithDetails,
-} from "@/types/dashboard";
+import type { IDailySales } from "@/types/dashboard";
 import dayjs from "dayjs";
 import {
   TrendingUp,
@@ -178,7 +174,6 @@ export default function Reports() {
   }
 
   const summary = dailySales?.summary;
-  const orders: IOrderWithDetails[] = dailySales?.data ?? [];
 
   return (
     <div className="p-6 space-y-6">
@@ -324,56 +319,45 @@ export default function Reports() {
                 </div>
               )}
 
-              {/* Transactions table */}
-              {orders.length === 0 ? (
+              {/* Transactions table — mirrors the PDF layout */}
+              {(reportData?.transactions?.length ?? 0) === 0 ? (
                 <p className="text-gray-400 text-sm">No orders found.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm border-collapse">
                     <thead>
-                      <tr className="bg-gray-50 text-gray-600 text-left">
-                        {["#", "Order No.", "Total", "Discount", "Date", "Details"].map((h) => (
-                          <th key={h} className="px-4 py-2 font-medium">{h}</th>
+                      <tr className="bg-indigo-800 text-white text-left">
+                        {["#", "Order No.", "Items", "Amount", "Discount", "Method"].map((h) => (
+                          <th key={h} className="px-4 py-2 font-medium text-xs uppercase tracking-wide">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.flatMap((order, idx) => {
-                        const rows: ReactNode[] = [
-                          <tr key={`order-${order.id}`} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-2 text-gray-400">{idx + 1}</td>
-                            <td className="px-4 py-2 font-medium text-gray-700">{order.orderNumber}</td>
-                            <td className="px-4 py-2 text-green-600 font-semibold">${Number(order.total).toFixed(2)}</td>
-                            <td className="px-4 py-2 text-yellow-600">${Number(order.discount).toFixed(2)}</td>
-                            <td className="px-4 py-2 text-gray-500">
-                              {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </td>
+                      {(reportData?.transactions ?? []).map((tx: any, idx: number) => {
+                        const methodColors: Record<string, string> = {
+                          CASH: "text-emerald-700 bg-emerald-50",
+                          ABA_PAYWAY: "text-blue-700 bg-blue-50",
+                          KHQR: "text-amber-700 bg-amber-50",
+                          OTHER: "text-gray-700 bg-gray-50",
+                        };
+                        const methodLabel = tx.paymentMethod === "ABA_PAYWAY"
+                          ? "ABA PayWay"
+                          : tx.paymentMethod?.charAt(0) + tx.paymentMethod?.slice(1).toLowerCase();
+
+                        return (
+                          <tr key={tx.id} className={`border-t border-gray-100 ${idx % 2 === 0 ? "bg-gray-50/50" : "bg-white"} hover:bg-gray-50 transition-colors`}>
+                            <td className="px-4 py-2 text-gray-400 text-xs">{idx + 1}</td>
+                            <td className="px-4 py-2 font-medium text-gray-700 text-xs">{tx.orderNumber}</td>
+                            <td className="px-4 py-2 text-gray-600 text-xs text-center">{tx.itemsCount}</td>
+                            <td className="px-4 py-2 text-green-600 font-semibold text-xs">${Number(tx.total).toFixed(2)}</td>
+                            <td className="px-4 py-2 text-yellow-600 text-xs">${Number(tx.discount).toFixed(2)}</td>
                             <td className="px-4 py-2">
-                              <button
-                                onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
-                                className="flex items-center gap-1 text-indigo-500 hover:text-indigo-700 text-xs"
-                              >
-                                {expandedOrder === order.id
-                                  ? <><ChevronUp   className="h-3.5 w-3.5" />Hide</>
-                                  : <><ChevronDown className="h-3.5 w-3.5" />View</>}
-                              </button>
+                              <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${methodColors[tx.paymentMethod] || "text-gray-700 bg-gray-50"}`}>
+                                {methodLabel || tx.paymentMethod}
+                              </span>
                             </td>
-                          </tr>,
-                        ];
-                        if (expandedOrder === order.id) {
-                          order.orderDetails.forEach((item) => {
-                            rows.push(
-                              <tr key={`detail-${item.id}`} className="bg-indigo-50 text-xs text-gray-600">
-                                <td />
-                                <td className="px-6 py-1.5 italic text-gray-500" colSpan={1}>↳ {item.productName}</td>
-                                <td className="px-4 py-1.5">${Number(item.productPrice).toFixed(2)} × {item.qty}</td>
-                                <td className="px-4 py-1.5 text-green-600 font-medium">${Number(item.amount).toFixed(2)}</td>
-                                <td colSpan={2} />
-                              </tr>,
-                            );
-                          });
-                        }
-                        return rows;
+                          </tr>
+                        );
                       })}
                     </tbody>
                   </table>
